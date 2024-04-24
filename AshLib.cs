@@ -438,4 +438,8 @@ public class DeltaHelper{
 		double extraTime = wantedDeltaTime - realDeltaTime;
 		System.Threading.Thread.Sleep((int)extraTime);
 	}
+	
+	public float getTime(){
+		return (float)(timer.Elapsed.TotalMilliseconds/1000d);
+	}
 }
