@@ -22,7 +22,7 @@ public class AshFile
 	}
 	
 	public AshFile(){
-		
+		this.data = new Dictionary<string, object>();
 	}
 	
 	public Dictionary<string, object> getAsDictionary(){
@@ -44,7 +44,7 @@ public class AshFile
 		return this.data[index];
 	}
 	
-	public string Write(){
+	public string AsString(){
 		string s = "";
 		foreach (KeyValuePair<string, object> kvp in this.data){
 			s += kvp.Key + ": " + kvp.Value + "\n";
@@ -377,23 +377,23 @@ internal class AshFileException : Exception{
         }
 }
 
-public class Dependencies{
+public class Dependencies{ //Used for handling files in a central folder (kindof the .minecraft folder)
 	public string path;
 	public AshFile config;
 	
-	public Dependencies(string p, bool c, string[] f, string[] d){
-		this.path = p;
-		checkDir(p);
-		if(c){
-			this.config = new AshFile(p+"\\config.ash");
+	public Dependencies(string path, bool config, string[] files, string[] directories){
+		this.path = path;
+		checkDir(this.path);
+		if(config){
+			this.config = new AshFile(p+"/config.ash");
 		}
 		
-		for(int i = 0; i < f.Length; i++){
-			this.checkFile(f[i]);
+		for(int i = 0; i < files.Length; i++){
+			this.checkFile(files[i]);
 		}
 		
-		for(int i = 0; i < d.Length; i++){
-			this.checkDir(f[i]);
+		for(int i = 0; i < directories.Length; i++){
+			this.checkDir(directories[i]);
 		}
 	}
 	
@@ -409,37 +409,73 @@ public class Dependencies{
 			fs.Close();
 		}
 	}
+	
+	public string ReadFile(string p){
+		return File.ReadAllText(this.path + p);
+	}
+	
+	public AshFile ReadAshFile(string p){
+		return (AshFile) AshFile.ReadFile(this.path + p);
+	}
+	
+	public void SaveFile(string p, string t){
+		File.WriteAllText(this.path + p; t);
+	}
+	
+	public void SaveAshFile(string p, AshFile a){
+		AshFile.WriteFile(this.path + p, a.getAsDictionary());
+	}
+	
+	public void CreateDir(string p){
+		if(!Directory.Exists(this.path + p)){
+			Directory.CreateDirectory(this.path + p);
+		}
+	}
 }
 
 public class DeltaHelper{
 	private Stopwatch timer;
 	private double lastTime;
+	private double lastStable;
+	private double stableTime = 1000d; //Default is 1 second
+	
 	public double deltaTime;
 	public double fps;
+	public double stableFps;
 	
 	public DeltaHelper(){}
 	
-	public void Start(){
+	public void Start(){ //Call to start the thing
 		timer = Stopwatch.StartNew();
 		lastTime = timer.Elapsed.TotalMilliseconds;
+		lastStable = 0d;
 		this.Frame();
 	}
 	
-	public void Frame(){
+	public void Frame(){ //Call it each frame
 		double currentTime = timer.Elapsed.TotalMilliseconds;
 		deltaTime = (currentTime - lastTime)/1000d;
 		lastTime = currentTime;
 		fps = 1d/deltaTime;
+		
+		if(currentTime > lastStable + stableTime){
+			lastStable = currentTime;
+			stableFps = fps;
+		}
 	}
 	
-	public void Target(float FPS){
+	public void Target(float FPS){ //Call with argument at the end of each frame to achieve fps target
 		double wantedDeltaTime = 1000d/(double)FPS; //In ms
 		double realDeltaTime = (timer.Elapsed.TotalMilliseconds - lastTime)/1000d;
 		double extraTime = wantedDeltaTime - realDeltaTime;
 		System.Threading.Thread.Sleep((int)extraTime);
 	}
 	
-	public float getTime(){
+	public void SetStableTime(float s){
+		this.stableTime = s;
+	}
+	
+	public float getTime(){ //Get total time in seconds
 		return (float)(timer.Elapsed.TotalMilliseconds/1000d);
 	}
 }
