@@ -385,7 +385,7 @@ public class Dependencies{ //Used for handling files in a central folder (kindof
 		this.path = path;
 		checkDir(this.path);
 		if(config){
-			this.config = new AshFile(p+"/config.ash");
+			this.config = new AshFile(this.path + "/config.ash");
 		}
 		
 		for(int i = 0; i < files.Length; i++){
@@ -419,7 +419,7 @@ public class Dependencies{ //Used for handling files in a central folder (kindof
 	}
 	
 	public void SaveFile(string p, string t){
-		File.WriteAllText(this.path + p; t);
+		File.WriteAllText(this.path + p, t);
 	}
 	
 	public void SaveAshFile(string p, AshFile a){
