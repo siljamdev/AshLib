@@ -6,10 +6,10 @@
     <Nullable>enable</Nullable>
 	<PackageId>AshLib</PackageId>
     <Version>2.1.0</Version>
-    <Authors>Dumbelfo</Authors>
+    <Authors>siljam</Authors>
     <Company>AshProject</Company>
 	<PackageDescription>Some utilities</PackageDescription>
-    <RepositoryUrl>https://github.com/Dumbelfo08/AshLib</RepositoryUrl>
+    <RepositoryUrl>https://github.com/siljamdev/AshLib</RepositoryUrl>
   </PropertyGroup>
 
 </Project>
