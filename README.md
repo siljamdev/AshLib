@@ -17,5 +17,5 @@ Its main attraction is you can convert this Date int just 6 base64 printable cha
 
 
 For a more detailed explanation, you can visit the [Usage Documentation](./documentation/AshLibUsageDocumentation.pdf)
-For a more practical explanation in the form of examples, you can visit the [Examples](./examples)
+For a more practical explanation in the form of examples, you can visit the [Examples](./documentation/examples)
 For a reference on everything, you can visit the [Reference Documentation](./documentation/AshLibReferenceDocumentation.pdf)

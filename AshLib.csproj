@@ -11,5 +11,9 @@
 	<PackageDescription>Some utilities</PackageDescription>
     <RepositoryUrl>https://github.com/siljamdev/AshLib</RepositoryUrl>
   </PropertyGroup>
+  
+  <ItemGroup>
+	<Compile Remove="documentation/**" />
+  </ItemGroup>
 
 </Project>
