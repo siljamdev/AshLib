@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace AshLib;
+namespace AshLib.Time;
 
 public class DeltaHelper{ //Class used for helping with deltatime, fps and those things
 	private Stopwatch timer;

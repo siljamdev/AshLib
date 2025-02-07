@@ -1,6 +1,7 @@
 using System;
+using AshLib.AshFiles;
 
-namespace AshLib;
+namespace AshLib.Folders;
 
 public class Dependencies{ //Used for handling files in a central folder (kindof the .minecraft folder)
 	public string path;
