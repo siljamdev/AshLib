@@ -1,5 +1,6 @@
 ﻿using System;
 using AshLib;
+using AshLib.AshFiles;
 
 class AshLibExample{
 	public static void Main(){

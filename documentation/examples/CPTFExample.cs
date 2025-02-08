@@ -1,5 +1,5 @@
 ﻿using System;
-using AshLib;
+using AshLib.Dates;
 
 class CPTFExample{
 	public static void Main(){
