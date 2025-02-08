@@ -25,7 +25,8 @@ This utility helps you handle files in a project, using a folder similar to the 
 This is a struct that represents a time, down to seconds, between the years 1488 and 2511.
 Its main attraction is you can convert this Date int just 6 base64 printable chars. This is called s CPTF(Compressed printable date format)
 
-###Outadated, TODO: Update docs
+###Outadated
+TODO: UPDATE DOCS
 For a more detailed explanation, you can visit the [Usage Documentation](./documentation/AshLibUsageDocumentation.pdf)
 For a more practical explanation in the form of examples, you can visit the [Examples](./documentation/examples)
 For a reference on everything, you can visit the [Reference Documentation](./documentation/AshLibReferenceDocumentation.pdf)
