@@ -4,7 +4,7 @@ namespace AshLib.AshFiles;
 
 public partial class AshFile{
 	protected internal class V1{
-		public static Dictionary<string, CampValue> Read(byte[] fileBytes){
+		public static Dictionary<string, object> Read(byte[] fileBytes){
 			long byteIndex = 1; //will be used as pointer of the reading byte. Starts at 1 because 0 is version and has already been read
 			
 			long fileLength = GetLength(fileBytes, ref byteIndex);
@@ -14,7 +14,7 @@ public partial class AshFile{
 				throw new AshFileException("Byte array length smaller than that specified in file");
 			}
 			
-			Dictionary<string, CampValue> output = new Dictionary<string, CampValue>(); //Will be the final product
+			Dictionary<string, object> output = new Dictionary<string, object>(); //Will be the final product
 			
 			//We can start with camps
 			
@@ -22,7 +22,7 @@ public partial class AshFile{
 			string campName;
 			long typeOfValue;
 			long valueLength;
-			CampValue val;
+			object val;
 			
 			while(true){ //each iteration will be a camp
 				if(byteIndex > fileLength + headerLength - 1){
@@ -48,7 +48,7 @@ public partial class AshFile{
 					for(int i = 0; i < valueLength; i++){
 						t1 = t1 + (char) fileBytes[byteIndex + i];
 					}
-					val = new CampValue(t1);
+					val = t1;
 					byteIndex = byteIndex + valueLength;
 					break;
 					
@@ -59,7 +59,7 @@ public partial class AshFile{
 					for(int i = 0; i < valueLength; i++){
 						t2 = t2 + fileBytes[byteIndex + i] * (ulong) Math.Pow(256, valueLength - 1 - i);
 					}
-					val = new CampValue(t2);
+					val = t2;
 					byteIndex = byteIndex + valueLength;
 					break;
 					
@@ -68,7 +68,7 @@ public partial class AshFile{
 					if(fileBytes[byteIndex] == 1){
 						t3 = true;
 					}
-					val = new CampValue(t3);
+					val = t3;
 					byteIndex++;
 					break;
 					
@@ -81,13 +81,13 @@ public partial class AshFile{
 			return output;
 		}
 		
-		public static byte[] Write(Dictionary<string, CampValue> dictionary){
+		public static byte[] Write(Dictionary<string, object> dictionary){
 			List<byte> output = new List<byte>(); //Final output
 			
-			List<KeyValuePair<string, CampValue>> dictionaryList = dictionary.ToList(); //Transform it to a list so it can be easily iterated through
+			List<KeyValuePair<string, object>> dictionaryList = dictionary.ToList(); //Transform it to a list so it can be easily iterated through
 			
 			char[] name;
-			CampValue val;
+			object val;
 			
 			Type t;
 			
@@ -95,18 +95,14 @@ public partial class AshFile{
 				name = dictionaryList[i].Key.ToCharArray();
 				val = dictionaryList[i].Value;
 				
-				t = val.type;
-				
 				WriteLength(name.Length, ref output);
 				
 				for(int j = 0; j < name.Length; j++){
 					output.Add((byte)name[j]);
 				}
 				
-				if(t == Type.String){
+				if(val is string s){
 					output.Add(1);
-					
-					string s = (string) val.GetValue();
 					
 					char[] valueString = s.ToCharArray();
 					
@@ -115,13 +111,10 @@ public partial class AshFile{
 					for(int j = 0; j < valueString.Length; j++){
 						output.Add((byte) valueString[j]);
 					}
-				} else if(t == Type.Ulong){
+				}else if(val is ulong num){
 					output.Add(2);
 					
-					ulong n = (ulong) val.type;
-					
 					int j = 0;
-					ulong num = n;
 					List<byte> number = new List<byte>();
 					
 					while(true){
@@ -138,10 +131,8 @@ public partial class AshFile{
 					for(int k = 0; k < number.Count(); k++){
 						output.Add(number[number.Count() - k - 1]);
 					}
-				} else if(t == Type.Bool){
+				}else if(val is bool b){
 					output.Add(3);
-					
-					bool b = (bool) val.GetValue();
 					
 					if(b){
 						output.Add(1);

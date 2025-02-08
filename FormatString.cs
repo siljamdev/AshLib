@@ -86,6 +86,13 @@ public class CharFormat{
 	public static bool operator !=(CharFormat a, CharFormat b){
         return !(a==b);
     }
+	
+	public override bool Equals(object obj){
+        if (obj is CharFormat other)
+            return this == other;
+        else
+            return false;
+    }
 }
 
 public class FormatString{
@@ -141,6 +148,7 @@ public class FormatString{
 	public FormatString(){
 		privateContent = new List<char>();
 		format = new List<CharFormat?>();
+		flagToBuild = true;
 	}
 	
 	#if WINDOWS
@@ -150,6 +158,12 @@ public class FormatString{
         && SetConsoleMode(iStdOut, outConsoleMode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 	}
 	#endif
+	
+	public void Clear(){
+		privateContent.Clear();
+		format.Clear();
+		flagToBuild = true;
+	}
 	
 	private void Build(){
 		CharFormat lastFormat = new CharFormat();
@@ -630,6 +644,32 @@ public class FormatString{
 		
 		return c;
 	}
+	
+	public static bool operator ==(FormatString a, FormatString b){
+		// Check for null references
+		if(ReferenceEquals(a, b)) return true;
+		if(a is null && b is null) return true;
+		if(a is null || b is null) return false;
+
+		// Compare all properties
+		if(a.content != b.content) return false;
+		if(a.format.Count != b.format.Count) return false;
+		for(int i = 0; i < a.format.Count; i++){
+			if(a.format[i] != b.format[i]) return false;
+		}
+		return true;
+    }
+	
+	public static bool operator !=(FormatString a, FormatString b){
+        return !(a==b);
+    }
+	
+	public override bool Equals(object obj){
+        if (obj is FormatString other)
+            return this == other;
+        else
+            return false;
+    }
 	
 	/* public static void test(){
 		string t = "/[c#,ff5900]";

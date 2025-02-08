@@ -6,8 +6,8 @@ namespace AshLib.AshFiles;
 public partial class AshFile{
 	protected internal class V2{
 		//Read
-		public static Dictionary<string, CampValue> Read(byte[] fileBytes){
-			Dictionary<string, CampValue> dic = new Dictionary<string, CampValue>();
+		public static Dictionary<string, object> Read(byte[] fileBytes){
+			Dictionary<string, object> dic = new Dictionary<string, object>();
 			
 			ulong index = 1; //We start at 1 because 0 is version
 			ulong campNum = ReadEHFL(fileBytes, ref index); //Read the number of camps
@@ -16,7 +16,7 @@ public partial class AshFile{
 				try{
 					string campName = ReadCampName(fileBytes, ref index);
 					
-					CampValue campValue = ReadCampValue(fileBytes, ref index);
+					object campValue = ReadCampValue(fileBytes, ref index);
 					
 					if(dic.ContainsKey(campName)){
 						throw new AshFileException("The dictionary already has a camp named " + campName, 4);
@@ -30,93 +30,93 @@ public partial class AshFile{
 			return dic;
 		}
 		
-		private static CampValue ReadCampValue(byte[] fileBytes, ref ulong index){
+		private static object ReadCampValue(byte[] fileBytes, ref ulong index){
 			byte t = fileBytes[index];
 			index++;
-			Type type = (Type) t;
+			AshFileType type = (AshFileType) t;
 			switch(type){
-				case Type.ByteArray:
+				case AshFileType.ByteArray:
 				return ReadByteArray(fileBytes, ref index);
 				
-				case Type.String:
+				case AshFileType.String:
 				return ReadString(fileBytes, ref index);
 				
-				case Type.Byte:
+				case AshFileType.Byte:
 				return ReadUint1(fileBytes, ref index);
 				
-				case Type.Ushort:
+				case AshFileType.Ushort:
 				return ReadUint2(fileBytes, ref index);
 				
-				case Type.Uint:
+				case AshFileType.Uint:
 				return ReadUint4(fileBytes, ref index);
 				
-				case Type.Ulong:
+				case AshFileType.Ulong:
 				return ReadUint8(fileBytes, ref index);
 				
-				case Type.Sbyte:
+				case AshFileType.Sbyte:
 				return ReadInt1(fileBytes, ref index);
 				
-				case Type.Short:
+				case AshFileType.Short:
 				return ReadInt2(fileBytes, ref index);
 				
-				case Type.Int:
+				case AshFileType.Int:
 				return ReadInt4(fileBytes, ref index);
 				
-				case Type.Long:
+				case AshFileType.Long:
 				return ReadInt8(fileBytes, ref index);
 				
-				case Type.Color:
+				case AshFileType.Color:
 				return ReadColor(fileBytes, ref index);
 				
-				case Type.Float:
+				case AshFileType.Float:
 				return ReadFloat4(fileBytes, ref index);
 				
-				case Type.Double:
+				case AshFileType.Double:
 				return ReadFloat8(fileBytes, ref index);
 				
-				case Type.Vec2:
+				case AshFileType.Vec2:
 				return ReadVec2(fileBytes, ref index);
 				
-				case Type.Vec3:
+				case AshFileType.Vec3:
 				return ReadVec3(fileBytes, ref index);
 				
-				case Type.Vec4:
+				case AshFileType.Vec4:
 				return ReadVec4(fileBytes, ref index);
 				
-				case Type.Bool:
+				case AshFileType.Bool:
 				return ReadBool(fileBytes, ref index);
 				
-				case Type.UbyteArray:
+				case AshFileType.UbyteArray:
 				return ReadUint1Array(fileBytes, ref index);
 				
-				case Type.UshortArray:
+				case AshFileType.UshortArray:
 				return ReadUint2Array(fileBytes, ref index);
 				
-				case Type.UintArray:
+				case AshFileType.UintArray:
 				return ReadUint4Array(fileBytes, ref index);
 				
-				case Type.UlongArray:
+				case AshFileType.UlongArray:
 				return ReadUint8Array(fileBytes, ref index);
 				
-				case Type.SbyteArray:
+				case AshFileType.SbyteArray:
 				return ReadInt1Array(fileBytes, ref index);
 				
-				case Type.ShortArray:
+				case AshFileType.ShortArray:
 				return ReadInt2Array(fileBytes, ref index);
 				
-				case Type.IntArray:
+				case AshFileType.IntArray:
 				return ReadInt4Array(fileBytes, ref index);
 				
-				case Type.LongArray:
+				case AshFileType.LongArray:
 				return ReadInt8Array(fileBytes, ref index);
 				
-				case Type.FloatArray:
+				case AshFileType.FloatArray:
 				return ReadFloat4Array(fileBytes, ref index);
 				
-				case Type.DoubleArray:
+				case AshFileType.DoubleArray:
 				return ReadFloat8Array(fileBytes, ref index);
 				
-				case Type.Date:
+				case AshFileType.Date:
 				return ReadDate(fileBytes, ref index);
 				
 				default:
@@ -126,7 +126,7 @@ public partial class AshFile{
 		
 		//Individual camp types
 		
-		private static CampValue ReadDate(byte[] fileBytes, ref ulong index){
+		private static object ReadDate(byte[] fileBytes, ref ulong index){
 			byte[] d = new byte[8];
 			d[0] = fileBytes[index];
 			d[1] = fileBytes[index + 1];
@@ -146,10 +146,10 @@ public partial class AshFile{
 			byte months = (byte)((combined >> 22) & 0x0F);
 			ushort years = (ushort)((combined >> 26) & 0x03FF);
 			
-			return new CampValue(new Date(seconds, minutes, hours, days, months, (ushort)(years + 1488)));
+			return new Date(seconds, minutes, hours, days, months, (ushort)(years + 1488));
 		}
 		
-		private static CampValue ReadFloat8Array(byte[] fileBytes, ref ulong index){
+		private static object ReadFloat8Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			double[] a = new double[length];
@@ -162,10 +162,10 @@ public partial class AshFile{
 				a[i] = f;
 			}
 			
-			return new CampValue(a);
+			return a;
 		}
 		
-		private static CampValue ReadFloat4Array(byte[] fileBytes, ref ulong index){
+		private static object ReadFloat4Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			float[] a = new float[length];
@@ -175,10 +175,10 @@ public partial class AshFile{
 				a[i] = f;
 			}
 			
-			return new CampValue(a);
+			return a;
 		}
 		
-		private static CampValue ReadInt8Array(byte[] fileBytes, ref ulong index){
+		private static object ReadInt8Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			long[] u = new long[length];
@@ -190,10 +190,10 @@ public partial class AshFile{
 				u[i] = us;
 			}
 			
-			return new CampValue(u);
+			return u;
 		}
 		
-		private static CampValue ReadInt4Array(byte[] fileBytes, ref ulong index){
+		private static object ReadInt4Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			int[] u = new int[length];
@@ -205,10 +205,10 @@ public partial class AshFile{
 				u[i] = us;
 			}
 			
-			return new CampValue(u);
+			return u;
 		}
 		
-		private static CampValue ReadInt2Array(byte[] fileBytes, ref ulong index){
+		private static object ReadInt2Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			short[] u = new short[length];
@@ -220,10 +220,10 @@ public partial class AshFile{
 				u[i] = us;
 			}
 			
-			return new CampValue(u);
+			return u;
 		}
 		
-		private static CampValue ReadInt1Array(byte[] fileBytes, ref ulong index){
+		private static object ReadInt1Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			sbyte[] b = new sbyte[length];
@@ -232,10 +232,10 @@ public partial class AshFile{
 			}
 			index += length;
 			
-			return new CampValue(b);
+			return b;
 		}
 		
-		private static CampValue ReadUint8Array(byte[] fileBytes, ref ulong index){
+		private static object ReadUint8Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			ulong[] u = new ulong[length];
@@ -247,10 +247,10 @@ public partial class AshFile{
 				u[i] = us;
 			}
 			
-			return new CampValue(u);
+			return u;
 		}
 		
-		private static CampValue ReadUint4Array(byte[] fileBytes, ref ulong index){
+		private static object ReadUint4Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			uint[] u = new uint[length];
@@ -262,10 +262,10 @@ public partial class AshFile{
 				u[i] = us;
 			}
 			
-			return new CampValue(u);
+			return u;
 		}
 		
-		private static CampValue ReadUint2Array(byte[] fileBytes, ref ulong index){
+		private static object ReadUint2Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			ushort[] u = new ushort[length];
@@ -277,10 +277,10 @@ public partial class AshFile{
 				u[i] = us;
 			}
 			
-			return new CampValue(u);
+			return u;
 		}
 		
-		private static CampValue ReadUint1Array(byte[] fileBytes, ref ulong index){
+		private static object ReadUint1Array(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			byte[] b = new byte[length];
@@ -289,127 +289,127 @@ public partial class AshFile{
 			}
 			index += length;
 			
-			return new CampValue(b);
+			return b;
 		}
 		
-		private static CampValue ReadBool(byte[] fileBytes, ref ulong index){
+		private static object ReadBool(byte[] fileBytes, ref ulong index){
 			byte b = fileBytes[index];
 			index++;
 			bool n = (b % 2 == 1 ? true : false); //0 will be false, 1 will be true, 2 will be false...
-			return new CampValue(n);
+			return n;
 		}
 		
-		private static CampValue ReadVec4(byte[] fileBytes, ref ulong index){
+		private static object ReadVec4(byte[] fileBytes, ref ulong index){
 			float x = ReadFloating4(fileBytes, ref index);
 			float y = ReadFloating4(fileBytes, ref index);
 			float z = ReadFloating4(fileBytes, ref index);
 			float w = ReadFloating4(fileBytes, ref index);
 			
 			Vec4 v = new Vec4(x, y, z, w);
-			return new CampValue(v);
+			return v;
 		}
 		
-		private static CampValue ReadVec3(byte[] fileBytes, ref ulong index){
+		private static object ReadVec3(byte[] fileBytes, ref ulong index){
 			float x = ReadFloating4(fileBytes, ref index);
 			float y = ReadFloating4(fileBytes, ref index);
 			float z = ReadFloating4(fileBytes, ref index);
 			
 			Vec3 v = new Vec3(x, y, z);
-			return new CampValue(v);
+			return v;
 		}
 		
-		private static CampValue ReadVec2(byte[] fileBytes, ref ulong index){
+		private static object ReadVec2(byte[] fileBytes, ref ulong index){
 			float x = ReadFloating4(fileBytes, ref index);
 			float y = ReadFloating4(fileBytes, ref index);
 			
 			Vec2 v = new Vec2(x, y);
-			return new CampValue(v);
+			return v;
 		}
 		
-		private static CampValue ReadFloat8(byte[] fileBytes, ref ulong index){			
+		private static object ReadFloat8(byte[] fileBytes, ref ulong index){			
 			ulong n2 = index;
 			byte[] b2 = EnsureEndianess(fileBytes, ref n2, 8);
 			double d = BitConverter.ToDouble(b2, (int) n2);
 			index += 8;
-			return new CampValue(d);
+			return d;
 		}
 		
-		private static CampValue ReadFloat4(byte[] fileBytes, ref ulong index){			
+		private static object ReadFloat4(byte[] fileBytes, ref ulong index){			
 			float f = ReadFloating4(fileBytes, ref index);
-			return new CampValue(f);
+			return f;
 		}
 		
-		private static CampValue ReadColor(byte[] fileBytes, ref ulong index){
+		private static object ReadColor(byte[] fileBytes, ref ulong index){
 			byte r = fileBytes[index];
 			byte g = fileBytes[index + 1];
 			byte b = fileBytes[index + 2];
 			index += 3;
 			
 			Color3 c = new Color3(r, g, b);
-			return new CampValue(c);
+			return c;
 		}
 		
-		private static CampValue ReadInt8(byte[] fileBytes, ref ulong index){			
+		private static object ReadInt8(byte[] fileBytes, ref ulong index){			
 			ulong n4 = index;
 			byte[] b4 = EnsureEndianess(fileBytes, ref n4, 8);
 			long ul = BitConverter.ToInt64(b4, (int) n4);
 			index += 8;
-			return new CampValue(ul);
+			return ul;
 		}
 		
-		private static CampValue ReadInt4(byte[] fileBytes, ref ulong index){			
+		private static object ReadInt4(byte[] fileBytes, ref ulong index){			
 			ulong n3 = index;
 			byte[] b3 = EnsureEndianess(fileBytes, ref n3, 4);
 			int ui = BitConverter.ToInt32(b3, (int) n3);
 			index += 4;
-			return new CampValue(ui);
+			return ui;
 		}
 		
-		private static CampValue ReadInt2(byte[] fileBytes, ref ulong index){			
+		private static object ReadInt2(byte[] fileBytes, ref ulong index){			
 			ulong n2 = index;
 			byte[] b2 = EnsureEndianess(fileBytes, ref n2, 2);
 			short us = BitConverter.ToInt16(b2, (int) n2);
 			index += 2;
-			return new CampValue(us);
+			return us;
 		}
 		
-		private static CampValue ReadInt1(byte[] fileBytes, ref ulong index){			
+		private static object ReadInt1(byte[] fileBytes, ref ulong index){			
 			sbyte b = (sbyte) fileBytes[index];
 			index++;
-			return new CampValue(b);
+			return b;
 		}
 		
-		private static CampValue ReadUint8(byte[] fileBytes, ref ulong index){			
+		private static object ReadUint8(byte[] fileBytes, ref ulong index){			
 			ulong n4 = index;
 			byte[] b4 = EnsureEndianess(fileBytes, ref n4, 8);
 			ulong ul = BitConverter.ToUInt64(b4, (int) n4);
 			index += 8;
-			return new CampValue(ul);
+			return ul;
 		}
 		
-		private static CampValue ReadUint4(byte[] fileBytes, ref ulong index){			
+		private static object ReadUint4(byte[] fileBytes, ref ulong index){			
 			ulong n3 = index;
 			byte[] b3 = EnsureEndianess(fileBytes, ref n3, 4);
 			uint ui = BitConverter.ToUInt32(b3, (int) n3);
 			index += 4;
-			return new CampValue(ui);
+			return ui;
 		}
 		
-		private static CampValue ReadUint2(byte[] fileBytes, ref ulong index){			
+		private static object ReadUint2(byte[] fileBytes, ref ulong index){			
 			ulong n2 = index;
 			byte[] b2 = EnsureEndianess(fileBytes, ref n2, 2);
 			ushort us = BitConverter.ToUInt16(b2, (int) n2);
 			index += 2;
-			return new CampValue(us);
+			return us;
 		}
 		
-		private static CampValue ReadUint1(byte[] fileBytes, ref ulong index){			
+		private static object ReadUint1(byte[] fileBytes, ref ulong index){			
 			byte b = fileBytes[index];
 			index++;
-			return new CampValue(b);
+			return b;
 		}
 		
-		private static CampValue ReadString(byte[] fileBytes, ref ulong index){
+		private static object ReadString(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			string s = "";
@@ -417,10 +417,10 @@ public partial class AshFile{
 				s += (char) fileBytes[index + i];
 			}
 			index += length;
-			return new CampValue(s);
+			return s;
 		}
 		
-		private static CampValue ReadByteArray(byte[] fileBytes, ref ulong index){
+		private static object ReadByteArray(byte[] fileBytes, ref ulong index){
 			ulong length = ReadHFL(fileBytes, ref index);
 			
 			byte[] b = new byte[length];
@@ -428,7 +428,7 @@ public partial class AshFile{
 				b[i] = fileBytes[index + i];
 			}
 			index += length;
-			return new CampValue(b);
+			return b;
 		}
 		
 		//Camp things
@@ -526,11 +526,73 @@ public partial class AshFile{
 		
 		//Write
 		
-		public static byte[] Write(Dictionary<string, CampValue> d){
+		private static AshFileType GetAshFileTypeFromType(Type type){
+			if (type == typeof(byte[]))
+				return AshFileType.ByteArray;
+			else if (type == typeof(string))
+				return AshFileType.String;
+			else if (type == typeof(byte))
+				return AshFileType.Byte;
+			else if (type == typeof(ushort))
+				return AshFileType.Ushort;
+			else if (type == typeof(uint))
+				return AshFileType.Uint;
+			else if (type == typeof(ulong))
+				return AshFileType.Ulong;
+			else if (type == typeof(sbyte))
+				return AshFileType.Sbyte;
+			else if (type == typeof(short))
+				return AshFileType.Short;
+			else if (type == typeof(int))
+				return AshFileType.Int;
+			else if (type == typeof(long))
+				return AshFileType.Long;
+			else if (type == typeof(Color3))
+				return AshFileType.Color;
+			else if (type == typeof(float))
+				return AshFileType.Float;
+			else if (type == typeof(double))
+				return AshFileType.Double;
+			else if (type == typeof(bool))
+				return AshFileType.Bool;
+			else if (type == typeof(Date))
+				return AshFileType.Date;
+			else if (type == typeof(Vec2))
+				return AshFileType.Vec2;
+			else if (type == typeof(Vec3))
+				return AshFileType.Vec3;
+			else if (type == typeof(Vec4))
+				return AshFileType.Vec4;
+			// Add additional checks for array types (e.g., byte[], uint[], etc.)
+			else if (type == typeof(byte[]))
+				return AshFileType.UbyteArray;
+			else if (type == typeof(ushort[]))
+				return AshFileType.UshortArray;
+			else if (type == typeof(uint[]))
+				return AshFileType.UintArray;
+			else if (type == typeof(ulong[]))
+				return AshFileType.UlongArray;
+			else if (type == typeof(sbyte[]))
+				return AshFileType.SbyteArray;
+			else if (type == typeof(short[]))
+				return AshFileType.ShortArray;
+			else if (type == typeof(int[]))
+				return AshFileType.IntArray;
+			else if (type == typeof(long[]))
+				return AshFileType.LongArray;
+			else if (type == typeof(float[]))
+				return AshFileType.FloatArray;
+			else if (type == typeof(double[]))
+				return AshFileType.DoubleArray;
+			
+			return AshFileType.ByteArray;
+		}
+		
+		public static byte[] Write(Dictionary<string, object> d){
 			List<byte> bytes = new List<byte>();
 			
-			KeyValuePair<string, CampValue>[] dictionary = new KeyValuePair<string, CampValue>[d.Count];
-			((ICollection<KeyValuePair<string, CampValue>>)d).CopyTo(dictionary, 0);
+			KeyValuePair<string, object>[] dictionary = new KeyValuePair<string, object>[d.Count];
+			((ICollection<KeyValuePair<string, object>>)d).CopyTo(dictionary, 0);
 			
 			bytes.Add(2);
 			
@@ -539,8 +601,8 @@ public partial class AshFile{
 			for(ulong i = 0; i < (ulong) dictionary.Length; i++){
 				try{
 					WriteCampName(bytes, dictionary[i].Key);
-					bytes.Add((byte) dictionary[i].Value.type);
-					WriteCampValue(bytes, dictionary[i].Value);
+					bytes.Add((byte) GetAshFileTypeFromType(dictionary[i].Value.GetType()));
+					WriteCampValue(bytes, GetAshFileTypeFromType(dictionary[i].Value.GetType()), dictionary[i].Value);
 				} catch(Exception e){
 					AshFile.HandleException(e, "####An error occurred while writing!####");
 				}
@@ -549,120 +611,118 @@ public partial class AshFile{
 			return bytes.ToArray();
 		}
 		
-		private static void WriteCampValue(List<byte> bytes, CampValue val){
-			Type t = val.type;
-			
+		private static void WriteCampValue(List<byte> bytes, AshFileType t, object val){
 			switch(t){
-				case Type.ByteArray:
-				WriteByteArray(bytes, (byte[]) val.GetValue());
+				case AshFileType.ByteArray:
+				WriteByteArray(bytes, (byte[]) val);
 				return;
 				
-				case Type.String:
-				WriteString(bytes, (string) val.GetValue());
+				case AshFileType.String:
+				WriteString(bytes, (string) val);
 				return;
 				
-				case Type.Byte:
-				WriteUint1(bytes, (byte) val.GetValue());
+				case AshFileType.Byte:
+				WriteUint1(bytes, (byte) val);
 				return;
 				
-				case Type.Ushort:
-				WriteUint2(bytes, (ushort) val.GetValue());
+				case AshFileType.Ushort:
+				WriteUint2(bytes, (ushort) val);
 				return;
 				
-				case Type.Uint:
-				WriteUint4(bytes, (uint) val.GetValue());
+				case AshFileType.Uint:
+				WriteUint4(bytes, (uint) val);
 				return;
 				
-				case Type.Ulong:
-				WriteUint8(bytes, (ulong) val.GetValue());
+				case AshFileType.Ulong:
+				WriteUint8(bytes, (ulong) val);
 				return;
 				
-				case Type.Sbyte:
-				WriteInt1(bytes, (sbyte) val.GetValue());
+				case AshFileType.Sbyte:
+				WriteInt1(bytes, (sbyte) val);
 				return;
 				
-				case Type.Short:
-				WriteInt2(bytes, (short) val.GetValue());
+				case AshFileType.Short:
+				WriteInt2(bytes, (short) val);
 				return;
 				
-				case Type.Int:
-				WriteInt4(bytes, (int) val.GetValue());
+				case AshFileType.Int:
+				WriteInt4(bytes, (int) val);
 				return;
 				
-				case Type.Long:
-				WriteInt8(bytes, (long) val.GetValue());
+				case AshFileType.Long:
+				WriteInt8(bytes, (long) val);
 				return;
 				
-				case Type.Color:
-				WriteColor(bytes, (Color3) val.GetValue());
+				case AshFileType.Color:
+				WriteColor(bytes, (Color3) val);
 				return;
 				
-				case Type.Float:
-				WriteFloat4(bytes, (float) val.GetValue());
+				case AshFileType.Float:
+				WriteFloat4(bytes, (float) val);
 				return;
 				
-				case Type.Double:
-				WriteFloat8(bytes, (double) val.GetValue());
+				case AshFileType.Double:
+				WriteFloat8(bytes, (double) val);
 				return;
 				
-				case Type.Vec2:
-				WriteVec2(bytes, (Vec2) val.GetValue());
+				case AshFileType.Vec2:
+				WriteVec2(bytes, (Vec2) val);
 				return;
 				
-				case Type.Vec3:
-				WriteVec3(bytes, (Vec3) val.GetValue());
+				case AshFileType.Vec3:
+				WriteVec3(bytes, (Vec3) val);
 				return;
 				
-				case Type.Vec4:
-				WriteVec4(bytes, (Vec4) val.GetValue());
+				case AshFileType.Vec4:
+				WriteVec4(bytes, (Vec4) val);
 				return;
 				
-				case Type.Bool:
-				WriteBool(bytes, (bool) val.GetValue());
+				case AshFileType.Bool:
+				WriteBool(bytes, (bool) val);
 				return;
 				
-				case Type.UbyteArray:
-				WriteUint1Array(bytes, (byte[]) val.GetValue());
+				case AshFileType.UbyteArray:
+				WriteUint1Array(bytes, (byte[]) val);
 				return;
 				
-				case Type.UshortArray:
-				WriteUint2Array(bytes, (ushort[]) val.GetValue());
+				case AshFileType.UshortArray:
+				WriteUint2Array(bytes, (ushort[]) val);
 				return;
 				
-				case Type.UintArray:
-				WriteUint4Array(bytes, (uint[]) val.GetValue());
+				case AshFileType.UintArray:
+				WriteUint4Array(bytes, (uint[]) val);
 				return;
 				
-				case Type.UlongArray:
-				WriteUint8Array(bytes, (ulong[]) val.GetValue());
+				case AshFileType.UlongArray:
+				WriteUint8Array(bytes, (ulong[]) val);
 				return;
 				
-				case Type.SbyteArray:
-				WriteInt1Array(bytes, (sbyte[]) val.GetValue());
+				case AshFileType.SbyteArray:
+				WriteInt1Array(bytes, (sbyte[]) val);
 				return;
 				
-				case Type.ShortArray:
-				WriteInt2Array(bytes, (short[]) val.GetValue());
+				case AshFileType.ShortArray:
+				WriteInt2Array(bytes, (short[]) val);
 				return;
 				
-				case Type.IntArray:
-				WriteInt4Array(bytes, (int[]) val.GetValue());
+				case AshFileType.IntArray:
+				WriteInt4Array(bytes, (int[]) val);
 				return;
 				
-				case Type.LongArray:
-				WriteInt8Array(bytes, (long[]) val.GetValue());
+				case AshFileType.LongArray:
+				WriteInt8Array(bytes, (long[]) val);
 				return;
 				
-				case Type.FloatArray:
-				WriteFloat4Array(bytes, (float[]) val.GetValue());
+				case AshFileType.FloatArray:
+				WriteFloat4Array(bytes, (float[]) val);
 				return;
 				
-				case Type.DoubleArray:
-				WriteFloat4Array(bytes, (double[]) val.GetValue());
+				case AshFileType.DoubleArray:
+				WriteFloat4Array(bytes, (double[]) val);
 				return;
 				
-				case Type.Date:
-				WriteDate(bytes, (Date) val.GetValue());
+				case AshFileType.Date:
+				WriteDate(bytes, (Date) val);
 				return;
 			}
 		}

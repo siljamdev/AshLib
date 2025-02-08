@@ -8,6 +8,16 @@ public struct Color3{ //Just for holding the data of a RGB color
 	public byte G;
 	public byte B;
 	
+	public static Color3 Black = new Color3(0, 0, 0);
+	public static Color3 White = new Color3(255, 255, 255);
+	public static Color3 Gray = new Color3(150, 150, 150);
+	public static Color3 Magenta = new Color3(255, 0, 255);
+	public static Color3 Cyan = new Color3(0, 255, 255);
+	public static Color3 Yellow = new Color3(255, 255, 0);
+	public static Color3 Blue = new Color3(0, 0, 255);
+	public static Color3 Green = new Color3(0, 255, 0);
+	public static Color3 Red = new Color3(255, 0, 0);
+	
 	public Color3(byte r, byte g, byte b){
 		this.R = r;
 		this.G = g;
@@ -15,6 +25,10 @@ public struct Color3{ //Just for holding the data of a RGB color
 	}
 	
 	public Color3(string hex){
+		this = Parse(hex);
+	}
+	
+	public static Color3 Parse(string hex){
 		if(hex.StartsWith("#")){
             hex = hex.Substring(1);
         }
@@ -27,9 +41,30 @@ public struct Color3{ //Just for holding the data of a RGB color
         byte g = byte.Parse(hex.Substring(2, 2).Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
         byte b = byte.Parse(hex.Substring(4, 2).Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
 		
-		this.R = r;
-		this.G = g;
-		this.B = b;
+		return new Color3(r, g, b);
+	}
+	
+	public static bool TryParse(string hex, out Color3 c){
+		if(hex.StartsWith("#")){
+            hex = hex.Substring(1);
+        }
+		
+		if(hex.Length != 6){
+			c = new Color3(0, 0, 0);
+            return false;
+        }
+		
+		try{
+			byte r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+			byte g = byte.Parse(hex.Substring(2, 2).Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+			byte b = byte.Parse(hex.Substring(4, 2).Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+			
+			c = new Color3(r, g, b);
+			return true;
+		}catch{
+			c = new Color3(0, 0, 0);
+			return false;
+		}
 	}
 	
 	public static implicit operator System.Drawing.Color(Color3 c){ //Can cast from and to the System.Drawing
@@ -84,8 +119,7 @@ public struct Vec2{ //for holding two float values together, no special funciona
 		return !(a == b);
 	}
 	
-	public override bool Equals(object obj)
-    {
+	public override bool Equals(object obj){
         if (obj is Vec2 other)
             return this == other;
         else
@@ -119,8 +153,7 @@ public struct Vec3{//for holding three float values together, no special funcion
 		return !(a == b);
 	}
 	
-	public override bool Equals(object obj)
-    {
+	public override bool Equals(object obj){
         if (obj is Vec3 other)
             return this == other;
         else
@@ -156,8 +189,7 @@ public struct Vec4{//for holding four float values together, no special funciona
 		return !(a == b);
 	}
 	
-	public override bool Equals(object obj)
-    {
+	public override bool Equals(object obj){
         if (obj is Vec4 other)
             return this == other;
         else

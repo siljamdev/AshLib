@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
@@ -6,18 +7,24 @@ namespace AshLib.AshFiles;
 
 public partial class AshFile
 {
-	public Dictionary<string, CampValue> data {get; private set;}
+	public Dictionary<string, object> data {get; private set;}
 	public string? path;
 	public byte format;
 	
-	private const int currentVersion = 2;
+	public int numberOfcamps{
+		get{
+			return data.Count;
+		}
+	}
+	
+	private const int currentVersion = 3;
 	
 	private static string conversionErrorLog;
 	private static ulong conversionErrorCount;
 	
 	//Constructors
 	
-	public AshFile(Dictionary<string, CampValue> d){
+	public AshFile(Dictionary<string, object> d){
 		this.data = d;
 		this.format = currentVersion;
 	}
@@ -33,18 +40,49 @@ public partial class AshFile
 	}
 	
 	public AshFile(){
-		this.data = new Dictionary<string, CampValue>();
+		this.data = new Dictionary<string, object>();
 		this.format = currentVersion;
 	}
 	
 	//Other stuff
 	
-	public string AsString(){
-		string s = "";
-		foreach (KeyValuePair<string, CampValue> kvp in this.data){
-			s += kvp.Key + ": " + kvp.Value + "\n";
+	public string Visualize(){
+		StringBuilder s = new StringBuilder();
+		bool f = false;
+		foreach(KeyValuePair<string, object> kvp in this.data){
+			if(kvp.Value is Array a){
+				if(f){
+					s.Append("\n");
+				}
+				string tab = new string(' ', kvp.Key.Length + 2);
+				s.Append(kvp.Key);
+				s.Append(": ");
+				
+				bool b = false;
+				
+				foreach(object o in a){
+					if(b){
+						s.Append("\n");
+						s.Append(tab);
+					}
+					s.Append(o.ToString());
+					b = true;
+				}
+			}else{
+				if(f){
+					s.Append("\n");
+				}
+				s.Append(kvp.Key);
+				s.Append(": ");
+				s.Append(kvp.Value.ToString());
+			}
+			f = true;
 		}
-		return s;
+		return s.ToString();
+	}
+	
+	public void Clear(){
+		this.data.Clear();
 	}
 	
 	//================
@@ -79,20 +117,20 @@ public partial class AshFile
 	
 	//^^THINGS THE USER WILL USE^^ vvTHINGS THE USER COULD BUT WONT USEvv
 	
-	public static Dictionary<string, CampValue> ReadFromFile(string path, out byte f){
+	public static Dictionary<string, object> ReadFromFile(string path, out byte f){
 		if(!File.Exists(path)){
 			throw new AshFileException("File in the path of \"" + path + "\" can't be found", 2);
 		}
 		byte[] fileBytes = File.ReadAllBytes(path);
-		Dictionary<string, CampValue> d = ReadFromBytes(fileBytes, out byte fo);
+		Dictionary<string, object> d = ReadFromBytes(fileBytes, out byte fo);
 		f = fo;
 		return d;
 	}
 	
-	public static Dictionary<string, CampValue> ReadFromBytes(byte[] fileBytes, out byte f){
+	public static Dictionary<string, object> ReadFromBytes(byte[] fileBytes, out byte f){
 		if (fileBytes.Length == 0){
 			f = currentVersion;
-			return new Dictionary<string, CampValue>();
+			return new Dictionary<string, object>();
 		}
 		f = fileBytes[0];
 		switch(fileBytes[0]){
@@ -100,12 +138,14 @@ public partial class AshFile
 				return V1.Read(fileBytes);
 			case 2:
 				return V2.Read(fileBytes);
+			case 3:
+				return V3.Read(fileBytes);
 			default:
 				throw new AshFileException("Invalid or unknown file version", 3);
 		}
 	}
 	
-	public static void WriteToFile(string path, Dictionary<string, CampValue> dictionary, byte format){
+	public static void WriteToFile(string path, Dictionary<string, object> dictionary, byte format){
 		try{
 			File.WriteAllBytes(path, WriteToBytes(dictionary, format));
 		} catch(Exception e){
@@ -113,12 +153,14 @@ public partial class AshFile
 		}
 	}
 	
-	public static byte[] WriteToBytes(Dictionary<string, CampValue> dictionary, byte format){
+	public static byte[] WriteToBytes(Dictionary<string, object> dictionary, byte format){
 		switch(format){
 			case 1:
 				return V1.Write(dictionary);
 			case 2:
 				return V2.Write(dictionary);
+			case 3:
+				return V3.Write(dictionary);
 			default:
 				throw new AshFileException("Invalid or unknown file version", 3);
 		}
@@ -172,32 +214,38 @@ public partial class AshFile
 		}
 		
 		if(a.data != null){
-			o.data = new Dictionary<string, CampValue>();
-			foreach (KeyValuePair<string, CampValue> kvp in a.data){
-				dynamic v = kvp.Value.GetValue();
-				o.data.Add(new string(kvp.Key), new CampValue(v));
+			o.data = new Dictionary<string, object>();
+			foreach(KeyValuePair<string, object> kvp in a.data){
+				if (kvp.Value is ICloneable cloneable){
+					o.data.Add(new string(kvp.Key), cloneable.Clone());
+				}else{
+					o.data.Add(new string(kvp.Key), kvp.Value);
+				}
 			}
 		}
 		
 		return o;
 	}
 	
-	public static explicit operator Dictionary<string, CampValue>(AshFile af){
+	public static AshFile Merge(AshFile a1, AshFile a2){
+		return a1 + a2;
+	}
+	
+	public static explicit operator Dictionary<string, object>(AshFile af){
 		return af.data;
 	}
 	
-	public static implicit operator AshFile(Dictionary<string, CampValue> d){
+	public static implicit operator AshFile(Dictionary<string, object> d){
 		return new AshFile(d);
 	}
 	
 	public static AshFile operator +(AshFile a1, AshFile a2){
 		AshFile o = DeepCopy(a1);
 		
-		foreach (KeyValuePair<string, CampValue> kvp in a2.data)
-        {
-            if (o.data.TryGetValue(kvp.Key, out CampValue v1) && !(v1.Equals(kvp.Value))){
+		foreach(KeyValuePair<string, object> kvp in a2.data){
+            if(o.data.TryGetValue(kvp.Key, out object v1)){
 				o.data[kvp.Key] = kvp.Value;
-			} else if (!o.data.TryGetValue(kvp.Key, out CampValue v)){
+			}else{
 				o.data.Add(kvp.Key, kvp.Value);
 			}
         }
@@ -213,9 +261,9 @@ public partial class AshFile
 		if(a1.data.Count != a2.data.Count)return false;
 
         // Check each key-value pair in dict1
-        foreach (KeyValuePair<string, CampValue> kvp in a1.data){
+        foreach (KeyValuePair<string, object> kvp in a1.data){
             // If the key is not present in dict2, or the corresponding value is not equal, return false
-            if (!a2.data.TryGetValue(kvp.Key, out CampValue val) || !val.Equals(kvp.Value))
+            if(!a2.data.TryGetValue(kvp.Key, out object val) || !AreValuesEqual(val, kvp.Value))
                 return false;
         }
 
@@ -227,13 +275,47 @@ public partial class AshFile
 		return !(a1 == a2);
 	}
 	
-	public override bool Equals(object obj)
-    {
+	public override bool Equals(object obj){
         if (obj is AshFile other)
             return this == other;
         else
             return false;
     }
+	
+	private static bool AreValuesEqual(object value1, object value2){
+		// Handle null cases
+		if(value1 == null && value2 == null){
+			return true;
+		}
+	
+		if(value1 == null || value2 == null){
+			return false;
+		}
+	
+		// If one or both values are arrays, handle them differently
+		if(value1 is Array array1 && value2 is Array array2){
+			if (array1.Length != array2.Length)
+				return false;
+	
+			// Compare each element of the arrays
+			for (int i = 0; i < array1.Length; i++){
+				if (!AreValuesEqual(array1.GetValue(i), array2.GetValue(i))){
+					return false;
+				}
+			}
+			return true;
+		}
+		
+		// If the types are the same, we can compare them directly
+		if(value1.GetType() == value2.GetType()){
+			dynamic v1 = value1;
+			dynamic v2 = value2;
+			return v1 == v2;
+		}
+	
+		// If the values are of different types, return false
+		return false;
+	}
 }
 
 [Serializable]
