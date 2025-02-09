@@ -32,6 +32,9 @@ public partial class AshFile
 	public AshFile(string path){
 		this.path = path;
 		if(!File.Exists(path)){
+			if(!Directory.Exists(Path.GetDirectoryName(path))){
+				Directory.CreateDirectory(Path.GetDirectoryName(path));
+			}
 			FileStream f = File.Create(path);
 			f.Close();
 		}

@@ -1,8 +1,7 @@
 ﻿using System;
-using AshLib;
 using AshLib.AshFiles;
 
-class AshLibExample{
+class AshFileExample{
 	public static void Main(){
 		AshFile af = new AshFile("C:/ashFileTest/messages.ash");
 		af.InitializeCamp("numberOfMessages", (uint) 1);
@@ -10,9 +9,9 @@ class AshLibExample{
 		af.Save();
 		
 		uint numberOfMessages = 0;
-		if(!af.CanGetCampAsUint("numberOfMessages", out numberOfMessages)){
+		if(!af.CanGetCamp("numberOfMessages", out numberOfMessages)){
 			Console.WriteLine("The file was in an incorrect format.");
-			Environment.Exit(0);
+			return;
 		}
 		Console.WriteLine(numberOfMessages);
 		
@@ -20,9 +19,9 @@ class AshLibExample{
 		int messageToShow = rand.Next((int) numberOfMessages);
 		
 		string quoteOfTheDay = "";
-		if(!af.CanGetCampAsString(messageToShow.ToString(), out quoteOfTheDay)){
+		if(!af.CanGetCamp(messageToShow.ToString(), out quoteOfTheDay)){
 			Console.WriteLine("The file was in an incorrect format.");
-			Environment.Exit(0);
+			return;
 		}
 		
 		Console.WriteLine("Quote of the day: " + quoteOfTheDay);

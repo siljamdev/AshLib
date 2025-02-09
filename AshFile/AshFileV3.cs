@@ -11,6 +11,8 @@ public partial class AshFile{
 			Dictionary<string, object> dic = new Dictionary<string, object>();
 			
 			ulong index = 5; //We start at 5 because 0 is version, and then %ASH comes
+			byte config = fileBytes[index];
+			index++;
 			ulong campNum = ReadEHFL(fileBytes, ref index); //Read the number of camps
 			
 			for(ulong i = 0; i < campNum; i++){
@@ -324,6 +326,7 @@ public partial class AshFile{
 			temp.Clear();
 			temp.Add(3);
 			temp.AddRange(Encoding.UTF8.GetBytes("%ASH"));
+			temp.Add(0);
 			
 			WriteEHFL(temp, (ulong) campNum);
 			temp.AddRange(bytes);
