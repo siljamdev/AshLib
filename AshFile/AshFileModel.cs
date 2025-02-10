@@ -9,9 +9,16 @@ public class AshFileModel{
 	public bool deleteNotMentioned;
 	public ModelInstance[] instances;
 	
+	public static readonly AshFileModel DeleteUnsupportedTypes = new AshFileModel();
+	
 	public AshFileModel(params ModelInstance[] m){
 		instances = m;
 		allowUnsupportedTypes = true;
+		deleteNotMentioned = false;
+	}
+	
+	private AshFileModel(){
+		allowUnsupportedTypes = false;
 		deleteNotMentioned = false;
 	}
 }
@@ -35,37 +42,40 @@ public enum ModelInstanceOperation{
 public partial class AshFile{
 	public static AshFile operator *(AshFile b, AshFileModel m){
 		AshFile a = AshFile.DeepCopy(b);
-		foreach(ModelInstance i in m.instances){
-			switch(i.operation){
-				case ModelInstanceOperation.Delete:
-					a.DeleteCamp(i.name);
-					break;
-				case ModelInstanceOperation.Exists:
-					a.InitializeCamp(i.name, i.value);
-					break;
-				case ModelInstanceOperation.Type:
-					if(a.CanGetCampType(i.name, out Type t)){
-						if(t != i.value.GetType()){
+		if(m.instances != null){
+			foreach(ModelInstance i in m.instances){
+				switch(i.operation){
+					case ModelInstanceOperation.Delete:
+						a.DeleteCamp(i.name);
+						break;
+					case ModelInstanceOperation.Exists:
+						a.InitializeCamp(i.name, i.value);
+						break;
+					case ModelInstanceOperation.Type:
+						if(a.CanGetCampType(i.name, out Type t)){
+							if(t != i.value.GetType()){
+								a.SetCamp(i.name, i.value);
+							}
+						}else{
 							a.SetCamp(i.name, i.value);
 						}
-					}else{
-						a.SetCamp(i.name, i.value);
-					}
-					break;
-				case ModelInstanceOperation.TypeCast:
-					if(a.CanGetCampType(i.name, out Type y)){
-						if(!CanWorkTogether(i.value.GetType(), y)){
+						break;
+					case ModelInstanceOperation.TypeCast:
+						if(a.CanGetCampType(i.name, out Type y)){
+							if(!CanWorkTogether(i.value.GetType(), y)){
+								a.SetCamp(i.name, i.value);
+							}
+						}else{
 							a.SetCamp(i.name, i.value);
 						}
-					}else{
+						break;
+					case ModelInstanceOperation.Value:
 						a.SetCamp(i.name, i.value);
-					}
-					break;
-				case ModelInstanceOperation.Value:
-					a.SetCamp(i.name, i.value);
-					break;
-			}
+						break;
+				}
+			}	
 		}
+		
 		
 		if(!m.allowUnsupportedTypes){
 			foreach(KeyValuePair<string, object> kvp in a.data){
@@ -81,7 +91,7 @@ public partial class AshFile{
 			}
 		}
 		
-		if(m.deleteNotMentioned){
+		if(m.deleteNotMentioned && m.instances != null){
 			List<string> names = new List<string>(m.instances.Length);
 			foreach(ModelInstance i in m.instances){
 				names.Add(i.name);

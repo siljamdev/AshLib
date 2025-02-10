@@ -326,7 +326,7 @@ public partial class AshFile{
 			temp.Clear();
 			temp.Add(3);
 			temp.AddRange(Encoding.UTF8.GetBytes("%ASH"));
-			temp.Add(0);
+			temp.Add(0); //Config, feature to come
 			
 			WriteEHFL(temp, (ulong) campNum);
 			temp.AddRange(bytes);

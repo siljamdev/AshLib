@@ -8,15 +8,15 @@ public struct Color3{ //Just for holding the data of a RGB color
 	public byte G;
 	public byte B;
 	
-	public static Color3 Black = new Color3(0, 0, 0);
-	public static Color3 White = new Color3(255, 255, 255);
-	public static Color3 Gray = new Color3(150, 150, 150);
-	public static Color3 Magenta = new Color3(255, 0, 255);
-	public static Color3 Cyan = new Color3(0, 255, 255);
-	public static Color3 Yellow = new Color3(255, 255, 0);
-	public static Color3 Blue = new Color3(0, 0, 255);
-	public static Color3 Green = new Color3(0, 255, 0);
-	public static Color3 Red = new Color3(255, 0, 0);
+	public static readonly Color3 Black = new Color3(0, 0, 0);
+	public static readonly Color3 White = new Color3(255, 255, 255);
+	public static readonly Color3 Gray = new Color3(150, 150, 150);
+	public static readonly Color3 Magenta = new Color3(255, 0, 255);
+	public static readonly Color3 Cyan = new Color3(0, 255, 255);
+	public static readonly Color3 Yellow = new Color3(255, 255, 0);
+	public static readonly Color3 Blue = new Color3(0, 0, 255);
+	public static readonly Color3 Green = new Color3(0, 255, 0);
+	public static readonly Color3 Red = new Color3(255, 0, 0);
 	
 	public Color3(byte r, byte g, byte b){
 		this.R = r;

@@ -11,10 +11,6 @@ public struct Date{ //Represents a time between the year 1488 and 2511, down to 
 	public ushort years {get{return (ushort)(_years + 1488);}}
 	private ushort _years;
 	
-	private bool isInvalid;
-	
-	public static readonly Date Invalid = new Date();
-	
 	public Date(byte s, byte m, byte h, byte d, byte mo, ushort y){ //Numbers will be cropped
 		if(s > 59){
 			s = 59;
@@ -49,26 +45,13 @@ public struct Date{ //Represents a time between the year 1488 and 2511, down to 
 			y = 1488;
 		}
 		_years = (ushort) (y - 1488);
-		
-		this.isInvalid = false;
 	}
 	
 	public Date(string cptf){ //Constructor directly from CPTF
 		this = FromCPTF(cptf);
-		
-		this.isInvalid = false;
 	}
 	
-	public Date(){
-		this.isInvalid = true;
-	}
-	
-	public string ToCPTF() //Stands for Compressed printable date format. Format to represent dates in 6 base64 charachters. 
-    {
-        if(this.isInvalid){
-			return "Invalid";
-		}
-		
+	public string ToCPTF(){ //Stands for Compressed printable date format. Format to represent dates in 6 base64 charachters. 
 		// Combine all parts into a single ulong
         ulong combined = ((ulong)seconds & 0x3F) | 
                          (((ulong)minutes & 0x3F) << 6) |
@@ -154,10 +137,6 @@ public struct Date{ //Represents a time between the year 1488 and 2511, down to 
     }
 	
 	public override string ToString(){
-		if(this.isInvalid){
-			return "Invalid";
-		}
-		
 		return days + "/" + months + "/" + years + " " + hours + ":" + minutes + ":" + seconds;
 	}
 	

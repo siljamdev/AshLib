@@ -151,6 +151,10 @@ public class FormatString{
 		flagToBuild = true;
 	}
 	
+	public FormatString(string s) : this(){
+		Append(s);
+	}
+	
 	#if WINDOWS
 	private static void PrepareConsole(){
 		var iStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
