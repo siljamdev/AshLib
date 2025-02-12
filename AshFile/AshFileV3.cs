@@ -387,7 +387,7 @@ public partial class AshFile{
 			if(conf.compactBools){
 				WriteEHFL(temp, (ulong) bools.Count);
 				foreach(KeyValuePair<string, bool> kvp in bools){
-					WriteCampName(temp, kvp.Key, false);
+					WriteCampName(temp, kvp.Key, conf.maskCampNames);
 				}
 				
 				temp.AddRange(CompactBoolArray(bools.Values.ToArray()));

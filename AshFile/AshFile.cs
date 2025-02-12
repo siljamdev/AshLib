@@ -170,6 +170,7 @@ public partial class AshFile
 			}
 		}catch(Exception e){
 			AshFile.HandleException(e, "####An error occurred while reading!####");
+			conf = AshFileFormatConfig.Default;
 			return new Dictionary<string, object>();
 		}
 	}
