@@ -11,6 +11,14 @@ public partial class AshFile
 	public string? path;
 	public byte format;
 	
+	public bool compactBools = true;
+	public bool maskCampNames = true;
+	public bool maskStrings = true;
+	
+	public AshFileFormatConfig formatConfig{get{
+		return new AshFileFormatConfig(compactBools, maskCampNames, maskStrings);
+	}}
+	
 	public int numberOfcamps{
 		get{
 			return data.Count;
@@ -38,8 +46,9 @@ public partial class AshFile
 			FileStream f = File.Create(path);
 			f.Close();
 		}
-		data = ReadFromFile(path, out byte fo);
+		data = ReadFromFile(path, out byte fo, out AshFileFormatConfig conf);
 		this.format = fo;
+		this.ImportFormatConfig(conf);
 	}
 	
 	public AshFile(){
@@ -48,6 +57,12 @@ public partial class AshFile
 	}
 	
 	//Other stuff
+	
+	public void ImportFormatConfig(AshFileFormatConfig conf){
+		this.compactBools = conf.compactBools;
+		this.maskCampNames = conf.maskCampNames;
+		this.maskStrings = conf.maskStrings;
+	}
 	
 	public string Visualize(){
 		StringBuilder s = new StringBuilder();
@@ -92,85 +107,96 @@ public partial class AshFile
 	
 	public void Load(string path){
 		this.path = path;
-		data = ReadFromFile(path, out byte f);
+		data = ReadFromFile(path, out byte f, out AshFileFormatConfig conf);
 		this.format = f;
+		this.ImportFormatConfig(conf);
 	}
 	
 	public void Load(){
 		if(path == null){
 			throw new AshFileException("Path has not been initialized", 1);
 		}
-		data = ReadFromFile(path, out byte f);
+		data = ReadFromFile(path, out byte f, out AshFileFormatConfig conf);
 		this.format = f;
+		this.ImportFormatConfig(conf);
 	}
 	
 	public void Save(string path){
 		this.path = path;
-		WriteToFile(path, data, this.format);
+		WriteToFile(path, data, this.format, this.formatConfig);
 	}
 	
 	public void Save(){
 		if(path == null){
 			throw new AshFileException("Path has not been initialized", 1);
 		}
-		WriteToFile(path, data, this.format);
+		WriteToFile(path, data, this.format, this.formatConfig);
 	}
 	
 
 	
 	//^^THINGS THE USER WILL USE^^ vvTHINGS THE USER COULD BUT WONT USEvv
 	
-	public static Dictionary<string, object> ReadFromFile(string path, out byte f){
+	public static Dictionary<string, object> ReadFromFile(string path, out byte f, out AshFileFormatConfig conf){
 		if(!File.Exists(path)){
 			throw new AshFileException("File in the path of \"" + path + "\" can't be found", 2);
 		}
 		byte[] fileBytes = File.ReadAllBytes(path);
-		Dictionary<string, object> d = ReadFromBytes(fileBytes, out byte fo);
+		Dictionary<string, object> d = ReadFromBytes(fileBytes, out byte fo, out AshFileFormatConfig co);
 		f = fo;
+		conf = co;
 		return d;
 	}
 	
-	public static Dictionary<string, object> ReadFromBytes(byte[] fileBytes, out byte f){
+	public static Dictionary<string, object> ReadFromBytes(byte[] fileBytes, out byte f, out AshFileFormatConfig conf){
 		if (fileBytes.Length == 0){
 			f = currentVersion;
+			conf = AshFileFormatConfig.Default;
 			return new Dictionary<string, object>();
 		}
 		f = fileBytes[0];
-		switch(fileBytes[0]){
-			case 1:
-				return V1.Read(fileBytes);
-			case 2:
-				return V2.Read(fileBytes);
-			case 3:
-				return V3.Read(fileBytes);
-			default:
-				throw new AshFileException("Invalid or unknown file version", 3);
+		try{
+			switch(fileBytes[0]){
+				case 1:
+					conf = AshFileFormatConfig.Default;
+					return V1.Read(fileBytes);
+				case 2:
+					conf = AshFileFormatConfig.Default;
+					return V2.Read(fileBytes);
+				case 3:
+					return V3.Read(fileBytes, out conf);
+				default:
+					throw new AshFileException("Invalid or unknown file version", 3);
+			}
+		}catch(Exception e){
+			AshFile.HandleException(e, "####An error occurred while reading!####");
+			return new Dictionary<string, object>();
 		}
 	}
 	
-	public static void WriteToFile(string path, Dictionary<string, object> dictionary, byte format){
+	public static void WriteToFile(string path, Dictionary<string, object> dictionary, byte format, AshFileFormatConfig conf){
 		try{
-			File.WriteAllBytes(path, WriteToBytes(dictionary, format));
+			File.WriteAllBytes(path, WriteToBytes(dictionary, format, conf));
 		} catch(Exception e){
 			throw new AshFileException("Exception occured when writing to file in path \"" + path + "\"", 5, e);
 		}
 	}
 	
-	public static byte[] WriteToBytes(Dictionary<string, object> dictionary, byte format){
+	public static byte[] WriteToBytes(Dictionary<string, object> dictionary, byte format, AshFileFormatConfig conf){
 		switch(format){
 			case 1:
 				return V1.Write(dictionary);
 			case 2:
 				return V2.Write(dictionary);
 			case 3:
-				return V3.Write(dictionary);
+				return V3.Write(dictionary, conf);
 			default:
 				throw new AshFileException("Invalid or unknown file version", 3);
 		}
 	}
 	
 	public byte[] WriteToBytes(){
-		return WriteToBytes(this.data, this.format);
+		return WriteToBytes(this.data, this.format, this.formatConfig);
 	}
 	
 	//ERROR HANDLING
@@ -318,6 +344,57 @@ public partial class AshFile
 	
 		// If the values are of different types, return false
 		return false;
+	}
+}
+
+public struct AshFileFormatConfig{
+	public bool compactBools;
+	public bool maskCampNames;
+	public bool maskStrings;
+	
+	public static readonly AshFileFormatConfig Default = new AshFileFormatConfig(true, true, true);
+	
+	public AshFileFormatConfig(bool b1, bool b2, bool b3){
+		compactBools = b1;
+		maskCampNames = b2;
+		maskStrings = b3;
+	}
+	
+	public AshFileFormatConfig(byte b){
+		if((b & 1) == 1){
+			compactBools = true;
+		}else{
+			compactBools = false;
+		}
+		
+		if((b & 2) == 2){
+			maskCampNames = true;
+		}else{
+			maskCampNames = false;
+		}
+		
+		if((b & 4) == 4){
+			maskStrings = true;
+		}else{
+			maskStrings = false;
+		}
+	}
+	
+	public byte ToByte(){
+		byte b = 0;
+		if(compactBools){
+			b |= 1;
+		}
+		
+		if(maskCampNames){
+			b |= 2;
+		}
+		
+		if(maskStrings){
+			b |= 4;
+		}
+		
+		return b;
 	}
 }
 

@@ -15,8 +15,8 @@ public partial class AshFile{
 			sb.Append(">:");
 			
 			if(kvp.Value is Array array){
-				AshFileTypeV3 t = GetFileTypeFromType(array.GetType().GetElementType());
-				if(t == AshFileTypeV3.Default){
+				AshFileType t = GetFileTypeFromType(array.GetType().GetElementType());
+				if(t == AshFileType.Default){
 					continue;
 				}
 				sb.Append(GetTypeIdentifier(t));
@@ -31,10 +31,10 @@ public partial class AshFile{
 				}
 				sb.Append("]; ");
 			}else{
-				AshFileTypeV3 t = GetFileTypeFromType(kvp.Value.GetType());
+				AshFileType t = GetFileTypeFromType(kvp.Value.GetType());
 				sb.Append(GetTypeIdentifier(t));
 				sb.Append(": ");
-				if(t == AshFileTypeV3.Default){
+				if(t == AshFileType.Default){
 					continue;
 				}
 				WriteObjectType(sb, kvp.Value);
@@ -96,72 +96,72 @@ public partial class AshFile{
 		}
 	}
 	
-	private static string GetTypeIdentifier(AshFileTypeV3 fileType){
+	private static string GetTypeIdentifier(AshFileType fileType){
 		switch(fileType){
-			case AshFileTypeV3.String: return "@";
-			case AshFileTypeV3.Byte: return "ub";
-			case AshFileTypeV3.Ushort: return "us";
-			case AshFileTypeV3.Uint: return "ui";
-			case AshFileTypeV3.Ulong: return "ul";
-			case AshFileTypeV3.Sbyte: return "sb";
-			case AshFileTypeV3.Short: return "s";
-			case AshFileTypeV3.Int: return "i";
-			case AshFileTypeV3.Long: return "l";
-			case AshFileTypeV3.Color3: return "#"; // Example for Color3 (need a proper type here)
-			case AshFileTypeV3.Float: return "f";
-			case AshFileTypeV3.Double: return "d";
-			case AshFileTypeV3.Vec2: return "v2"; // Example for Vec2
-			case AshFileTypeV3.Vec3: return "v3"; // Example for Vec3
-			case AshFileTypeV3.Vec4: return "v4"; // Example for Vec4
-			case AshFileTypeV3.Bool: return "b";
-			case AshFileTypeV3.Date: return "dt";
+			case AshFileType.String: return "@";
+			case AshFileType.Byte: return "ub";
+			case AshFileType.Ushort: return "us";
+			case AshFileType.Uint: return "ui";
+			case AshFileType.Ulong: return "ul";
+			case AshFileType.Sbyte: return "sb";
+			case AshFileType.Short: return "s";
+			case AshFileType.Int: return "i";
+			case AshFileType.Long: return "l";
+			case AshFileType.Color3: return "#"; // Example for Color3 (need a proper type here)
+			case AshFileType.Float: return "f";
+			case AshFileType.Double: return "d";
+			case AshFileType.Vec2: return "v2"; // Example for Vec2
+			case AshFileType.Vec3: return "v3"; // Example for Vec3
+			case AshFileType.Vec4: return "v4"; // Example for Vec4
+			case AshFileType.Bool: return "b";
+			case AshFileType.Date: return "dt";
 			default: return "ERROR"; // Default case if no matching type
 		}
 	}
 	
-	private static AshFileTypeV3 GetTypeFromIdentifier(string identifier){
+	private static AshFileType GetTypeFromIdentifier(string identifier){
 		switch(identifier){
-			case "@": return AshFileTypeV3.String;
-			case "ub": return AshFileTypeV3.Byte;
-			case "us": return AshFileTypeV3.Ushort;
-			case "ui": return AshFileTypeV3.Uint;
-			case "ul": return AshFileTypeV3.Ulong;
-			case "sb": return AshFileTypeV3.Sbyte;
-			case "s": return AshFileTypeV3.Short;
+			case "@": return AshFileType.String;
+			case "ub": return AshFileType.Byte;
+			case "us": return AshFileType.Ushort;
+			case "ui": return AshFileType.Uint;
+			case "ul": return AshFileType.Ulong;
+			case "sb": return AshFileType.Sbyte;
+			case "s": return AshFileType.Short;
 			case "n":
-			case "i": return AshFileTypeV3.Int;
-			case "l": return AshFileTypeV3.Long;
-			case "#": return AshFileTypeV3.Color3;
-			case "f": return AshFileTypeV3.Float;
-			case "d": return AshFileTypeV3.Double;
-			case "v2": return AshFileTypeV3.Vec2;
-			case "v3": return AshFileTypeV3.Vec3;
-			case "v4": return AshFileTypeV3.Vec4;
-			case "b": return AshFileTypeV3.Bool;
-			case "dt": return AshFileTypeV3.Date;
-			default: return AshFileTypeV3.Default;
+			case "i": return AshFileType.Int;
+			case "l": return AshFileType.Long;
+			case "#": return AshFileType.Color3;
+			case "f": return AshFileType.Float;
+			case "d": return AshFileType.Double;
+			case "v2": return AshFileType.Vec2;
+			case "v3": return AshFileType.Vec3;
+			case "v4": return AshFileType.Vec4;
+			case "b": return AshFileType.Bool;
+			case "dt": return AshFileType.Date;
+			default: return AshFileType.Default;
 		}
 	}
 	
-	private static Type GetTypeFromEnum(AshFileTypeV3 fileType){
+	private static Type GetTypeFromEnum(AshFileType fileType){
 		switch (fileType){
-			case AshFileTypeV3.String: return typeof(string);
-			case AshFileTypeV3.Byte: return typeof(byte);
-			case AshFileTypeV3.Ushort: return typeof(ushort);
-			case AshFileTypeV3.Uint: return typeof(uint);
-			case AshFileTypeV3.Ulong: return typeof(ulong);
-			case AshFileTypeV3.Sbyte: return typeof(sbyte);
-			case AshFileTypeV3.Short: return typeof(short);
-			case AshFileTypeV3.Int: return typeof(int);
-			case AshFileTypeV3.Long: return typeof(long);
-			case AshFileTypeV3.Color3: return typeof(Color3); // Example for Color3 (need a proper type here)
-			case AshFileTypeV3.Float: return typeof(float);
-			case AshFileTypeV3.Double: return typeof(double);
-			case AshFileTypeV3.Vec2: return typeof(Vec2); // Example for Vec2
-			case AshFileTypeV3.Vec3: return typeof(Vec3); // Example for Vec3
-			case AshFileTypeV3.Vec4: return typeof(Vec4); // Example for Vec4
-			case AshFileTypeV3.Bool: return typeof(bool);
-			case AshFileTypeV3.Date: return typeof(Date);
+			case AshFileType.String: return typeof(string);
+			case AshFileType.Byte: return typeof(byte);
+			case AshFileType.Ushort: return typeof(ushort);
+			case AshFileType.Uint: return typeof(uint);
+			case AshFileType.Ulong: return typeof(ulong);
+			case AshFileType.Sbyte: return typeof(sbyte);
+			case AshFileType.Short: return typeof(short);
+			case AshFileType.Int: return typeof(int);
+			case AshFileType.Long: return typeof(long);
+			case AshFileType.Color3: return typeof(Color3); // Example for Color3 (need a proper type here)
+			case AshFileType.Float: return typeof(float);
+			case AshFileType.Double: return typeof(double);
+			case AshFileType.Vec2: return typeof(Vec2); // Example for Vec2
+			case AshFileType.Vec3: return typeof(Vec3); // Example for Vec3
+			case AshFileType.Vec4: return typeof(Vec4); // Example for Vec4
+			case AshFileType.Bool: return typeof(bool);
+			case AshFileType.Date: return typeof(Date);
 			default: return typeof(object); // Default case if no matching type
 		}
 	}
@@ -170,7 +170,8 @@ public partial class AshFile{
 		try{
 			a = Parse(s);
 			return true;
-		}catch{
+		}catch(Exception e){
+			HandleException(e, "####An error occurred while parsing!####");
 			a = null;
 			return false;
 		}
@@ -188,8 +189,8 @@ public partial class AshFile{
 				ParseColon(s, ref index);
 				ParseWhite(s, ref index);
 				string type = ParseUntilColon(s, ref index);
-				AshFileTypeV3 t = GetTypeFromIdentifier(type);
-				if(t == AshFileTypeV3.Default){
+				AshFileType t = GetTypeFromIdentifier(type);
+				if(t == AshFileType.Default){
 					ParseWhite(s, ref index);
 					ParseColon(s, ref index);
 					ParseWhite(s, ref index);
@@ -249,93 +250,93 @@ public partial class AshFile{
 		return af;
 	}
 	
-	private static object ParseValue(string s, ref int index, AshFileTypeV3 t, bool array){
+	private static object ParseValue(string s, ref int index, AshFileType t, bool array){
 		switch(t){
-			case AshFileTypeV3.String:
+			case AshFileType.String:
 				if(ParseQuote(s, ref index)){
 					return ParseString(s, ref index).Replace("\\\"", "\"").Replace("\\n", Environment.NewLine);
 				}else{
 					ParseNextSemiColon(s, ref index, array);
 					return null;
 				}
-			case AshFileTypeV3.Byte:
+			case AshFileType.Byte:
 				string p = ParseUntilSemicolon(s, ref index, array);
 				if(byte.TryParse(p, out byte j2)){
 					return j2;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Ushort:
+			case AshFileType.Ushort:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(ushort.TryParse(p, out ushort j3)){
 					return j3;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Uint:
+			case AshFileType.Uint:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(uint.TryParse(p, out uint j4)){
 					return j4;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Ulong:
+			case AshFileType.Ulong:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(ulong.TryParse(p, out ulong j5)){
 					return j5;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Sbyte:
+			case AshFileType.Sbyte:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(sbyte.TryParse(p, out sbyte j6)){
 					return j6;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Short:
+			case AshFileType.Short:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(short.TryParse(p, out short j7)){
 					return j7;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Int:
+			case AshFileType.Int:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(int.TryParse(p, out int j8)){
 					return j8;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Long:
+			case AshFileType.Long:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(long.TryParse(p, out long j9)){
 					return j9;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Color3:
+			case AshFileType.Color3:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(Color3.TryParse(p, out Color3 j10)){
 					return j10;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Float:
+			case AshFileType.Float:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(float.TryParse(p, out float j11)){
 					return j11;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Double:
+			case AshFileType.Double:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(double.TryParse(p, out double j12)){
 					return j12;
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Vec2:
+			case AshFileType.Vec2:
 				float j13a, j13b;
 				byte c = 0;
 				
@@ -361,7 +362,7 @@ public partial class AshFile{
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Vec3:
+			case AshFileType.Vec3:
 				float j14a, j14b, j14c;
 				c = 0;
 				
@@ -399,7 +400,7 @@ public partial class AshFile{
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Vec4:
+			case AshFileType.Vec4:
 				float j15a, j15b, j15c, j15d;
 				c = 0;
 				
@@ -449,7 +450,7 @@ public partial class AshFile{
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Bool:
+			case AshFileType.Bool:
 				p = ParseUntilSemicolon(s, ref index, array);
 				if(p == "true"){
 					return true;
@@ -458,7 +459,7 @@ public partial class AshFile{
 				}else{
 					return null;
 				}
-			case AshFileTypeV3.Date:
+			case AshFileType.Date:
 				p = ParseUntilSemicolon(s, ref index, array);
 				string[] d = p.Split("/");
 				if(d.Length != 6){
@@ -482,7 +483,7 @@ public partial class AshFile{
 		
 		while(true){
 			if(index >= s.Length){
-				throw new AshFileException("Expected '\"' and found end of string");
+				throw new AshFileException("Expected '\"' and found end of string", 12);
 			}
 			
 			if(s[index] == '"'){
@@ -509,7 +510,7 @@ public partial class AshFile{
 	
 	private static bool ParseCloseArray(string s, ref int index){
 		if(index >= s.Length){
-			throw new AshFileException("Expected ']' and found end of string");
+			throw new AshFileException("Expected ']' and found end of string", 12);
 		}else if(s[index] == ']'){
 			index++;
 			return true;
@@ -520,7 +521,7 @@ public partial class AshFile{
 	
 	private static bool ParseComma(string s, ref int index){
 		if(index >= s.Length){
-			throw new AshFileException("Expected ',' and found end of string");
+			throw new AshFileException("Expected ',' and found end of string", 12);
 		}else if(s[index] == ','){
 			index++;
 			return true;
@@ -531,7 +532,7 @@ public partial class AshFile{
 	
 	private static bool ParseQuote(string s, ref int index){
 		if(index >= s.Length){
-			throw new AshFileException("Expected '\"' and found end of string");
+			throw new AshFileException("Expected '\"' and found end of string", 12);
 		}else if(s[index] == '"'){
 			index++;
 			return true;
@@ -542,7 +543,7 @@ public partial class AshFile{
 	
 	private static bool ParseOpenArray(string s, ref int index){
 		if(index >= s.Length){
-			throw new AshFileException("Expected value of array start and found end of string");
+			throw new AshFileException("Expected value of array start and found end of string", 12);
 		}else if(s[index] == '['){
 			index++;
 			return true;
@@ -553,23 +554,23 @@ public partial class AshFile{
 	
 	private static void ParseSemiColon(string s, ref int index){
 		if(index >= s.Length){
-			throw new AshFileException("Expected ';' and found end of string");
+			throw new AshFileException("Expected ';' and found end of string", 12);
 		}else if(s[index] == ';'){
 			index++;
 			return;
 		}else{
-			throw new AshFileException("Expected ';' and found '" + s[index] + "'");
+			throw new AshFileException("Expected ';' and found '" + s[index] + "'", 12);
 		}
 	}
 	
 	private static void ParseColon(string s, ref int index){
 		if(index >= s.Length){
-			throw new AshFileException("Expected ':' and found end of string");
+			throw new AshFileException("Expected ':' and found end of string", 12);
 		}else if(s[index] == ':'){
 			index++;
 			return;
 		}else{
-			throw new AshFileException("Expected ':' and found '" + s[index] + "'");
+			throw new AshFileException("Expected ':' and found '" + s[index] + "'", 12);
 		}
 	}
 	
@@ -580,7 +581,7 @@ public partial class AshFile{
 		
 		while(true){
 			if(index >= s.Length){
-				throw new AshFileException("Expected camp name and found end of string");
+				throw new AshFileException("Expected camp name and found end of string", 12);
 			}
 			
 			if(s[index] == '>'){
@@ -606,12 +607,12 @@ public partial class AshFile{
 	
 	private static void ParseCloseName(string s, ref int index){
 		if(index >= s.Length){
-			throw new AshFileException("Expected '>' and found end of string");
+			throw new AshFileException("Expected '>' and found end of string", 12);
 		}else if(s[index] == '>'){
 			index++;
 			return;
 		}else{
-			throw new AshFileException("Expected '>' and found '" + s[index] + "'");
+			throw new AshFileException("Expected '>' and found '" + s[index] + "'", 12);
 		}
 	}
 	
@@ -623,13 +624,13 @@ public partial class AshFile{
 			index++;
 			return true;
 		}
-		throw new AshFileException("Expected '<' and found '" + s[index] + "'");
+		throw new AshFileException("Expected '<' and found '" + s[index] + "'", 12);
 	}
 	
 	private static void ParseNextCloseArray(string s, ref int index){
 		while(true){
 			if(index >= s.Length){
-				throw new AshFileException("Expected ']' and found end of string");
+				throw new AshFileException("Expected ']' and found end of string", 12);
 			}
 			
 			if(s[index] == ']'){
@@ -644,7 +645,7 @@ public partial class AshFile{
 	private static void ParseNextSemiColon(string s, ref int index, bool array){
 		while(true){
 			if(index >= s.Length){
-				throw new AshFileException("Expected ';' and found end of string");
+				throw new AshFileException("Expected ';' and found end of string", 12);
 			}
 			
 			if(s[index] == ';' || (array && s[index] == ']')){

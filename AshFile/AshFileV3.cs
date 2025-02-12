@@ -7,19 +7,42 @@ namespace AshLib.AshFiles;
 public partial class AshFile{
 	protected internal class V3{
 		//Read
-		public static Dictionary<string, object> Read(byte[] fileBytes){
+		public static Dictionary<string, object> Read(byte[] fileBytes, out AshFileFormatConfig conf){
 			Dictionary<string, object> dic = new Dictionary<string, object>();
 			
 			ulong index = 5; //We start at 5 because 0 is version, and then %ASH comes
-			byte config = fileBytes[index];
+			AshFileFormatConfig config = new AshFileFormatConfig(fileBytes[index]);
+			conf = config;
 			index++;
+			if(config.compactBools){
+				try{
+					ulong boolNum = ReadEHFL(fileBytes, ref index); //Read the number of bools
+					
+					List<string> names = new List<string>((int)boolNum);
+					
+					for(ulong i = 0; i < boolNum; i++){
+						names.Add(ReadCampName(fileBytes, ref index, config.maskCampNames));
+					}
+					
+					byte[] y = new byte[(boolNum + 8 - 1) / 8];
+					Array.Copy(fileBytes, (int) index, y, 0, y.Length);
+					index += (ulong) y.Length;
+					bool[] bools = UnCompactBoolArray(y, (int) boolNum);
+					
+					for(int i = 0; i < (int) boolNum; i++){
+						dic.Add(names[i], bools[i]);
+					}
+				}catch(Exception e){
+					AshFile.HandleException(e, "####An error occurred while reading booldict!####");
+				}
+			}
 			ulong campNum = ReadEHFL(fileBytes, ref index); //Read the number of camps
 			
 			for(ulong i = 0; i < campNum; i++){
 				try{
-					string campName = ReadCampName(fileBytes, ref index);
+					string campName = ReadCampName(fileBytes, ref index, config.maskCampNames);
 					
-					object campValue = ReadCampValue(fileBytes, ref index);
+					object campValue = ReadCampValue(fileBytes, ref index, config.maskStrings, config.compactBools);
 					
 					if(dic.ContainsKey(campName)){
 						throw new AshFileException("The dictionary already has a camp named " + campName, 4);
@@ -33,26 +56,34 @@ public partial class AshFile{
 			return dic;
 		}
 		
-		private static object ReadCampValue(byte[] fileBytes, ref ulong index){
+		private static object ReadCampValue(byte[] fileBytes, ref ulong index, bool mask, bool compactBools){
 			byte t = fileBytes[index];
 			index++;
-			return ReadValueType(fileBytes, ref index, t);
+			return ReadValueType(fileBytes, ref index, t, mask, compactBools);
 		}
 		
-		private static object ReadValueType(byte[] fileBytes, ref ulong index, byte t){
+		private static object ReadValueType(byte[] fileBytes, ref ulong index, byte t, bool mask, bool compactBools){
 			if(t > 127){
 				t &= 127;
 				
-				Type y = GetTypeFromEnum((AshFileTypeV3) t);
+				Type y = GetTypeFromEnum((AshFileType) t);
 				if(y == typeof(object)){
 					return null;
 				}
 				
 				ulong length = ReadHFL(fileBytes, ref index);
 				
+				if((AshFileType) t == AshFileType.Bool && compactBools){
+					byte[] by = new byte[(length + 8 - 1) / 8];
+					Array.Copy(fileBytes, (int) index, by, 0, (int) by.Length);
+					index += (ulong) by.Length;
+					bool[] bools = UnCompactBoolArray(by, (int) length);
+					return bools;
+				}
+				
 				Array array = Array.CreateInstance(y, (int) length);
 				for(int i = 0; i < (int) length; i++){
-					dynamic d = ReadValueType(fileBytes, ref index, t);
+					dynamic d = ReadValueType(fileBytes, ref index, t, mask, compactBools);
 					array.SetValue(d, i);
 				}
 				
@@ -60,66 +91,73 @@ public partial class AshFile{
 				return a;
 			}
 			
-			switch((AshFileTypeV3) t){
+			switch((AshFileType) t){
 				default:
-				case AshFileTypeV3.Default:
+				case AshFileType.Default:
 					ulong length = ReadHFL(fileBytes, ref index);
 					
 					byte[] b = new byte[length];
 					Buffer.BlockCopy(fileBytes, (int) index, b, 0, (int) length);
 					index += length;
 					return b;
-				case AshFileTypeV3.String:
+				case AshFileType.String:
 					length = ReadEHFL(fileBytes, ref index);
 					
-					string s = Encoding.UTF8.GetString(fileBytes, (int) index, (int) length);
+					byte[] vv = new byte[(int) length];
+					Array.Copy(fileBytes, (int) index, vv, 0, (int) length);
+					
+					if(mask){
+						vv = Unscramble(vv);
+					}
+					
+					string s = Encoding.UTF8.GetString(vv);
 					index += length;
 					return s;
-				case AshFileTypeV3.Byte:
+				case AshFileType.Byte:
 					byte b2 = fileBytes[index];
 					index++;
 					return b2;
-				case AshFileTypeV3.Ushort:
+				case AshFileType.Ushort:
 					ulong n2 = index;
 					b = EnsureEndianess(fileBytes, ref n2, 2);
 					ushort us = BitConverter.ToUInt16(b, (int) n2);
 					index += 2;
 					return us;
-				case AshFileTypeV3.Uint:
+				case AshFileType.Uint:
 					n2 = index;
 					b = EnsureEndianess(fileBytes, ref n2, 4);
 					uint ui = BitConverter.ToUInt32(b, (int) n2);
 					index += 4;
 					return ui;
-				case AshFileTypeV3.Ulong:
+				case AshFileType.Ulong:
 					n2 = index;
 					b = EnsureEndianess(fileBytes, ref n2, 8);
 					ulong ul = BitConverter.ToUInt64(b, (int) n2);
 					index += 8;
 					return ul;
-				case AshFileTypeV3.Sbyte:
+				case AshFileType.Sbyte:
 					sbyte b3 = (sbyte) fileBytes[index];
 					index++;
 					return b3;
-				case AshFileTypeV3.Short:
+				case AshFileType.Short:
 					n2 = index;
 					b = EnsureEndianess(fileBytes, ref n2, 2);
 					short sh = BitConverter.ToInt16(b, (int) n2);
 					index += 2;
 					return sh;
-				case AshFileTypeV3.Int:
+				case AshFileType.Int:
 					n2 = index;
 					b = EnsureEndianess(fileBytes, ref n2, 4);
 					int ii = BitConverter.ToInt32(b, (int) n2);
 					index += 4;
 					return ii;
-				case AshFileTypeV3.Long:
+				case AshFileType.Long:
 					n2 = index;
 					b = EnsureEndianess(fileBytes, ref n2, 8);
 					long ll = BitConverter.ToInt64(b, (int) n2);
 					index += 8;
 					return ll;
-				case AshFileTypeV3.Color3:
+				case AshFileType.Color3:
 					byte rrr = fileBytes[index];
 					byte ggg = fileBytes[index + 1];
 					byte bbb = fileBytes[index + 2];
@@ -127,32 +165,32 @@ public partial class AshFile{
 					
 					Color3 c = new Color3(rrr, ggg, bbb);
 					return c;
-				case AshFileTypeV3.Float:
+				case AshFileType.Float:
 					ulong n1 = index;
 					b = EnsureEndianess(fileBytes, ref n1, 4);
 					float f = BitConverter.ToSingle(b, (int) n1);
 					index += 4;
 					return f;
-				case AshFileTypeV3.Double:
+				case AshFileType.Double:
 					n1 = index;
 					b = EnsureEndianess(fileBytes, ref n1, 8);
 					double dd = BitConverter.ToDouble(b, (int) n1);
 					index += 8;
 					return dd;
-				case AshFileTypeV3.Vec2:
+				case AshFileType.Vec2:
 					float x = ReadFloating4(fileBytes, ref index);
 					float y = ReadFloating4(fileBytes, ref index);
 					
 					Vec2 v2 = new Vec2(x, y);
 					return v2;
-				case AshFileTypeV3.Vec3:
+				case AshFileType.Vec3:
 					x = ReadFloating4(fileBytes, ref index);
 					y = ReadFloating4(fileBytes, ref index);
 					float z = ReadFloating4(fileBytes, ref index);
 					
 					Vec3 v3 = new Vec3(x, y, z);
 					return v3;
-				case AshFileTypeV3.Vec4:
+				case AshFileType.Vec4:
 					x = ReadFloating4(fileBytes, ref index);
 					y = ReadFloating4(fileBytes, ref index);
 					z = ReadFloating4(fileBytes, ref index);
@@ -160,12 +198,12 @@ public partial class AshFile{
 					
 					Vec4 v4 = new Vec4(x, y, z, w);
 					return v4;
-				case AshFileTypeV3.Bool:
+				case AshFileType.Bool:
 					byte bb3 = fileBytes[index];
 					index++;
 					bool n = (bb3 % 2 == 1 ? true : false); //0 will be false, 1 will be true, 2 will be false...
 					return n;
-				case AshFileTypeV3.Date:
+				case AshFileType.Date:
 					byte[] d = new byte[8];
 					d[0] = fileBytes[index];
 					d[1] = fileBytes[index + 1];
@@ -197,36 +235,38 @@ public partial class AshFile{
 			return f;
 		}
 		
-		private static Type GetTypeFromEnum(AshFileTypeV3 fileType){
+		private static Type GetTypeFromEnum(AshFileType fileType){
 			switch (fileType){
-				case AshFileTypeV3.String: return typeof(string);
-				case AshFileTypeV3.Byte: return typeof(byte);
-				case AshFileTypeV3.Ushort: return typeof(ushort);
-				case AshFileTypeV3.Uint: return typeof(uint);
-				case AshFileTypeV3.Ulong: return typeof(ulong);
-				case AshFileTypeV3.Sbyte: return typeof(sbyte);
-				case AshFileTypeV3.Short: return typeof(short);
-				case AshFileTypeV3.Int: return typeof(int);
-				case AshFileTypeV3.Long: return typeof(long);
-				case AshFileTypeV3.Color3: return typeof(Color3); // Example for Color3 (need a proper type here)
-				case AshFileTypeV3.Float: return typeof(float);
-				case AshFileTypeV3.Double: return typeof(double);
-				case AshFileTypeV3.Vec2: return typeof(Vec2); // Example for Vec2
-				case AshFileTypeV3.Vec3: return typeof(Vec3); // Example for Vec3
-				case AshFileTypeV3.Vec4: return typeof(Vec4); // Example for Vec4
-				case AshFileTypeV3.Bool: return typeof(bool);
-				case AshFileTypeV3.Date: return typeof(Date);
+				case AshFileType.String: return typeof(string);
+				case AshFileType.Byte: return typeof(byte);
+				case AshFileType.Ushort: return typeof(ushort);
+				case AshFileType.Uint: return typeof(uint);
+				case AshFileType.Ulong: return typeof(ulong);
+				case AshFileType.Sbyte: return typeof(sbyte);
+				case AshFileType.Short: return typeof(short);
+				case AshFileType.Int: return typeof(int);
+				case AshFileType.Long: return typeof(long);
+				case AshFileType.Color3: return typeof(Color3); // Example for Color3 (need a proper type here)
+				case AshFileType.Float: return typeof(float);
+				case AshFileType.Double: return typeof(double);
+				case AshFileType.Vec2: return typeof(Vec2); // Example for Vec2
+				case AshFileType.Vec3: return typeof(Vec3); // Example for Vec3
+				case AshFileType.Vec4: return typeof(Vec4); // Example for Vec4
+				case AshFileType.Bool: return typeof(bool);
+				case AshFileType.Date: return typeof(Date);
 				default: return typeof(object); // Default case if no matching type
 			}
 		}
 		
-		private static string ReadCampName(byte[] fileBytes, ref ulong index){
+		private static string ReadCampName(byte[] fileBytes, ref ulong index, bool mask){
 			ulong length = ReadEHFL(fileBytes, ref index);
 			
 			byte[] b = new byte[(int) length];
 			Array.Copy(fileBytes, (int) index, b, 0, (int) length);
 			
-			b = Unscramble(b);
+			if(mask){
+				b = Unscramble(b);
+			}
 			
 			string s = Encoding.UTF8.GetString(b);
 			index += length;
@@ -302,21 +342,37 @@ public partial class AshFile{
 		}
 		
 		//Write
-		public static byte[] Write(Dictionary<string, object> d){
+		public static byte[] Write(Dictionary<string, object> d, AshFileFormatConfig conf){
 			List<byte> bytes = new List<byte>();
 			List<byte> temp = new List<byte>();
 			
 			ulong campNum = 0;
 			
-			KeyValuePair<string, object>[] dictionary = new KeyValuePair<string, object>[d.Count];
-			((ICollection<KeyValuePair<string, object>>)d).CopyTo(dictionary, 0);
+			List<KeyValuePair<string, object>> dictionary = new List<KeyValuePair<string, object>>((ICollection<KeyValuePair<string, object>>)d);
+			//((ICollection<KeyValuePair<string, object>>)d).CopyTo(dictionary, 0);
 			
-			for(ulong i = 0; i < (ulong) dictionary.Length; i++){
+			Dictionary<string, bool> bools = new Dictionary<string, bool>();
+			
+			try{
+				if(conf.compactBools){
+					for(ulong i = 0; i < (ulong) dictionary.Count; i++){
+						if(dictionary[(int) i].Value is bool b){
+							bools.Add(dictionary[(int) i].Key, b);
+							dictionary.RemoveAt((int) i);
+							i--;
+						}
+					}
+				}
+			}catch(Exception e){
+				AshFile.HandleException(e, "####An error occurred while writing booldict!####");
+			}
+			
+			for(ulong i = 0; i < (ulong) dictionary.Count; i++){
 				try{
 					temp.Clear();
-					if(WriteCampValue(temp, dictionary[i].Value)){
+					if(WriteCampValue(temp, dictionary[(int)i].Value, conf.maskStrings, conf.compactBools)){
 						campNum++;
-						WriteCampName(bytes, dictionary[i].Key);
+						WriteCampName(bytes, dictionary[(int)i].Key, conf.maskCampNames);
 						bytes.AddRange(temp);
 					}
 				} catch(Exception e){
@@ -326,7 +382,16 @@ public partial class AshFile{
 			temp.Clear();
 			temp.Add(3);
 			temp.AddRange(Encoding.UTF8.GetBytes("%ASH"));
-			temp.Add(0); //Config, feature to come
+			temp.Add(conf.ToByte()); //Config
+			
+			if(conf.compactBools){
+				WriteEHFL(temp, (ulong) bools.Count);
+				foreach(KeyValuePair<string, bool> kvp in bools){
+					WriteCampName(temp, kvp.Key, false);
+				}
+				
+				temp.AddRange(CompactBoolArray(bools.Values.ToArray()));
+			}
 			
 			WriteEHFL(temp, (ulong) campNum);
 			temp.AddRange(bytes);
@@ -334,33 +399,41 @@ public partial class AshFile{
 			return temp.ToArray();
 		}
 		
-		private static bool WriteCampValue(List<byte> bytes, object o){
+		private static bool WriteCampValue(List<byte> bytes, object o, bool mask, bool compactBools){
 			if(o is Array array){
 				Type elementType = array.GetType().GetElementType();
-				AshFileTypeV3 t = GetFileTypeFromType(elementType);
-				if(t == AshFileTypeV3.Default){
+				AshFileType t = GetFileTypeFromType(elementType);
+				if(t == AshFileType.Default){
 					return false;
 				}
 				byte b = (byte) ((byte) t | 128);
 				bytes.Add(b);
 				
 				WriteHFL(bytes, (ulong) array.Length);
+				if(t == AshFileType.Bool && compactBools){
+					bytes.AddRange(CompactBoolArray((bool[]) array));
+					return true;
+				}
 				
 				foreach(object i in array){
-					WriteCampType(bytes, i);
+					WriteCampType(bytes, i, mask);
 				}
 				return true;
 			}
 			
-			AshFileTypeV3 t1 = GetFileTypeFromType(o.GetType());
+			AshFileType t1 = GetFileTypeFromType(o.GetType());
 			bytes.Add((byte) t1);
-			return WriteCampType(bytes, o);
+			return WriteCampType(bytes, o, mask);
 		}
 		
-		private static bool WriteCampType(List<byte> bytes, object o){
+		private static bool WriteCampType(List<byte> bytes, object o, bool mask){
 			switch(o){
 				case string s:
 					byte[] b = Encoding.UTF8.GetBytes(s);
+					
+					if(mask){
+						b = Scramble(b);
+					}
 					
 					WriteEHFL(bytes, (ulong) b.Length);
 					bytes.AddRange(b);
@@ -457,26 +530,26 @@ public partial class AshFile{
 			return true;
 		}
 		
-		private static AshFileTypeV3 GetFileTypeFromType(Type type){
-			if (type == typeof(string)) return AshFileTypeV3.String;
-			if (type == typeof(byte)) return AshFileTypeV3.Byte;
-			if (type == typeof(ushort)) return AshFileTypeV3.Ushort;
-			if (type == typeof(uint)) return AshFileTypeV3.Uint;
-			if (type == typeof(ulong)) return AshFileTypeV3.Ulong;
-			if (type == typeof(sbyte)) return AshFileTypeV3.Sbyte;
-			if (type == typeof(short)) return AshFileTypeV3.Short;
-			if (type == typeof(int)) return AshFileTypeV3.Int;
-			if (type == typeof(long)) return AshFileTypeV3.Long;
-			if (type == typeof(Color3)) return AshFileTypeV3.Color3;
-			if (type == typeof(float)) return AshFileTypeV3.Float;
-			if (type == typeof(double)) return AshFileTypeV3.Double;
-			if (type == typeof(Vec2)) return AshFileTypeV3.Vec2;
-			if (type == typeof(Vec3)) return AshFileTypeV3.Vec3;
-			if (type == typeof(Vec4)) return AshFileTypeV3.Vec4;
-			if (type == typeof(bool)) return AshFileTypeV3.Bool;
-			if (type == typeof(Date)) return AshFileTypeV3.Date;
+		private static AshFileType GetFileTypeFromType(Type type){
+			if (type == typeof(string)) return AshFileType.String;
+			if (type == typeof(byte)) return AshFileType.Byte;
+			if (type == typeof(ushort)) return AshFileType.Ushort;
+			if (type == typeof(uint)) return AshFileType.Uint;
+			if (type == typeof(ulong)) return AshFileType.Ulong;
+			if (type == typeof(sbyte)) return AshFileType.Sbyte;
+			if (type == typeof(short)) return AshFileType.Short;
+			if (type == typeof(int)) return AshFileType.Int;
+			if (type == typeof(long)) return AshFileType.Long;
+			if (type == typeof(Color3)) return AshFileType.Color3;
+			if (type == typeof(float)) return AshFileType.Float;
+			if (type == typeof(double)) return AshFileType.Double;
+			if (type == typeof(Vec2)) return AshFileType.Vec2;
+			if (type == typeof(Vec3)) return AshFileType.Vec3;
+			if (type == typeof(Vec4)) return AshFileType.Vec4;
+			if (type == typeof(bool)) return AshFileType.Bool;
+			if (type == typeof(Date)) return AshFileType.Date;
 		
-			return AshFileTypeV3.Default; // Default case if no matching type
+			return AshFileType.Default; // Default case if no matching type
 		}
 		
 		private static void WriteFloat4(List<byte> bytes, float b){
@@ -485,33 +558,41 @@ public partial class AshFile{
             bytes.AddRange(e);
 		}
 		
-		private static void WriteCampName(List<byte> bytes, string name){			
+		private static void WriteCampName(List<byte> bytes, string name, bool mask){			
 			byte[] b = Encoding.UTF8.GetBytes(name);
 			
-			b = Scramble(b);
+			if(mask){
+				b = Scramble(b);
+			}
 			
 			WriteEHFL(bytes, (ulong) b.Length);
 			bytes.AddRange(b);
 		}
 		
 		private static void WriteEHFL(List<byte> bytes, ulong length){
+			if(length == 0){
+				bytes.Add(0);
+				bytes.Add(0);
+				return;
+			}
+			
 			if(length < 256){
 				bytes.Add((byte) length);
 				return;
 			}
 			bytes.Add(0);
 			
-            if (length < 65536){
+            if(length < 65536){
                 bytes.Add(2);
 				byte[] l = BitConverter.GetBytes(length);
 				byte[] e = EnsureEndianess(l, 2);
                 bytes.AddRange(e);
-            } else if (length < 4294967296){
+            }else if (length < 4294967296){
                 bytes.Add(4);
 				byte[] l = BitConverter.GetBytes(length);
 				byte[] e = EnsureEndianess(l, 4);
                 bytes.AddRange(e);
-            } else{
+            }else{
                 bytes.Add(8);
 				byte[] l = BitConverter.GetBytes(length);
 				byte[] e = EnsureEndianess(l, 8);
@@ -570,6 +651,26 @@ public partial class AshFile{
 			for(int i = 0; i < b.Length; i++){
 				b[i] = (byte) (b[i] - 13 - i);
 			}
+			return b;
+		}
+		
+		private static byte[] CompactBoolArray(bool[] b){
+			byte[] y = new byte[(b.Length + 8 - 1) / 8];
+			
+			for(int i = 0; i < b.Length; i++){
+				y[i / 8] |= (byte) ((b[i] ? 1 : 0) << (i % 8));
+			}
+			
+			return y;
+		}
+		
+		private static bool[] UnCompactBoolArray(byte[] y, int count){
+			bool[] b = new bool[count];
+			
+			for(int i = 0; i < count; i++){
+				b[i] = ((y[i / 8] & (1 << (i % 8))) >> (i % 8)) == 1 ? true : false;
+			}
+			
 			return b;
 		}
 	}

@@ -80,11 +80,11 @@ public partial class AshFile{
 		if(!m.allowUnsupportedTypes){
 			foreach(KeyValuePair<string, object> kvp in a.data){
 				if(kvp.Value.GetType().IsArray){
-					if(GetFileTypeFromType(kvp.Value.GetType().GetElementType()) == AshFileTypeV3.Default){
+					if(GetFileTypeFromType(kvp.Value.GetType().GetElementType()) == AshFileType.Default){
 						a.DeleteCamp(kvp.Key);
 					}
 				}else{
-					if(GetFileTypeFromType(kvp.Value.GetType()) == AshFileTypeV3.Default){
+					if(GetFileTypeFromType(kvp.Value.GetType()) == AshFileType.Default){
 						a.DeleteCamp(kvp.Key);
 					}
 				}
@@ -129,25 +129,25 @@ public partial class AshFile{
         }
     }
 	
-	private static AshFileTypeV3 GetFileTypeFromType(Type type){
-		if(type == typeof(string)) return AshFileTypeV3.String;
-		if(type == typeof(byte)) return AshFileTypeV3.Byte;
-		if(type == typeof(ushort)) return AshFileTypeV3.Ushort;
-		if(type == typeof(uint)) return AshFileTypeV3.Uint;
-		if(type == typeof(ulong)) return AshFileTypeV3.Ulong;
-		if(type == typeof(sbyte)) return AshFileTypeV3.Sbyte;
-		if(type == typeof(short)) return AshFileTypeV3.Short;
-		if(type == typeof(int)) return AshFileTypeV3.Int;
-		if(type == typeof(long)) return AshFileTypeV3.Long;
-		if(type == typeof(Color3)) return AshFileTypeV3.Color3;
-		if(type == typeof(float)) return AshFileTypeV3.Float;
-		if(type == typeof(double)) return AshFileTypeV3.Double;
-		if(type == typeof(Vec2)) return AshFileTypeV3.Vec2;
-		if(type == typeof(Vec3)) return AshFileTypeV3.Vec3;
-		if(type == typeof(Vec4)) return AshFileTypeV3.Vec4;
-		if(type == typeof(bool)) return AshFileTypeV3.Bool;
-		if(type == typeof(Date)) return AshFileTypeV3.Date;
+	private static AshFileType GetFileTypeFromType(Type type){
+		if(type == typeof(string)) return AshFileType.String;
+		if(type == typeof(byte)) return AshFileType.Byte;
+		if(type == typeof(ushort)) return AshFileType.Ushort;
+		if(type == typeof(uint)) return AshFileType.Uint;
+		if(type == typeof(ulong)) return AshFileType.Ulong;
+		if(type == typeof(sbyte)) return AshFileType.Sbyte;
+		if(type == typeof(short)) return AshFileType.Short;
+		if(type == typeof(int)) return AshFileType.Int;
+		if(type == typeof(long)) return AshFileType.Long;
+		if(type == typeof(Color3)) return AshFileType.Color3;
+		if(type == typeof(float)) return AshFileType.Float;
+		if(type == typeof(double)) return AshFileType.Double;
+		if(type == typeof(Vec2)) return AshFileType.Vec2;
+		if(type == typeof(Vec3)) return AshFileType.Vec3;
+		if(type == typeof(Vec4)) return AshFileType.Vec4;
+		if(type == typeof(bool)) return AshFileType.Bool;
+		if(type == typeof(Date)) return AshFileType.Date;
 	
-		return AshFileTypeV3.Default; // Default case if no matching type
+		return AshFileType.Default; // Default case if no matching type
 	}
 }

@@ -4,7 +4,7 @@ using AshLib.Dates;
 
 namespace AshLib.AshFiles;
 
-public enum AshFileType : byte{ //Represents the type of value in a AshFile camp
+public enum AshFileTypeOld : byte{ //Represents the type of value in a AshFile camp
 	ByteArray = 0,
 	String = 1,
 	Byte = 2,
@@ -35,7 +35,7 @@ public enum AshFileType : byte{ //Represents the type of value in a AshFile camp
 	Date = 27
 }
 
-public enum AshFileTypeV3 : byte{ //Represents the type of value in a AshFile camp
+public enum AshFileType : byte{ //Represents the type of value in a AshFile camp
 	Default = 0,
 	String = 1,
 	Byte = 2,

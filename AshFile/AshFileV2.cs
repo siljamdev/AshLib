@@ -33,90 +33,90 @@ public partial class AshFile{
 		private static object ReadCampValue(byte[] fileBytes, ref ulong index){
 			byte t = fileBytes[index];
 			index++;
-			AshFileType type = (AshFileType) t;
+			AshFileTypeOld type = (AshFileTypeOld) t;
 			switch(type){
-				case AshFileType.ByteArray:
+				case AshFileTypeOld.ByteArray:
 				return ReadByteArray(fileBytes, ref index);
 				
-				case AshFileType.String:
+				case AshFileTypeOld.String:
 				return ReadString(fileBytes, ref index);
 				
-				case AshFileType.Byte:
+				case AshFileTypeOld.Byte:
 				return ReadUint1(fileBytes, ref index);
 				
-				case AshFileType.Ushort:
+				case AshFileTypeOld.Ushort:
 				return ReadUint2(fileBytes, ref index);
 				
-				case AshFileType.Uint:
+				case AshFileTypeOld.Uint:
 				return ReadUint4(fileBytes, ref index);
 				
-				case AshFileType.Ulong:
+				case AshFileTypeOld.Ulong:
 				return ReadUint8(fileBytes, ref index);
 				
-				case AshFileType.Sbyte:
+				case AshFileTypeOld.Sbyte:
 				return ReadInt1(fileBytes, ref index);
 				
-				case AshFileType.Short:
+				case AshFileTypeOld.Short:
 				return ReadInt2(fileBytes, ref index);
 				
-				case AshFileType.Int:
+				case AshFileTypeOld.Int:
 				return ReadInt4(fileBytes, ref index);
 				
-				case AshFileType.Long:
+				case AshFileTypeOld.Long:
 				return ReadInt8(fileBytes, ref index);
 				
-				case AshFileType.Color:
+				case AshFileTypeOld.Color:
 				return ReadColor(fileBytes, ref index);
 				
-				case AshFileType.Float:
+				case AshFileTypeOld.Float:
 				return ReadFloat4(fileBytes, ref index);
 				
-				case AshFileType.Double:
+				case AshFileTypeOld.Double:
 				return ReadFloat8(fileBytes, ref index);
 				
-				case AshFileType.Vec2:
+				case AshFileTypeOld.Vec2:
 				return ReadVec2(fileBytes, ref index);
 				
-				case AshFileType.Vec3:
+				case AshFileTypeOld.Vec3:
 				return ReadVec3(fileBytes, ref index);
 				
-				case AshFileType.Vec4:
+				case AshFileTypeOld.Vec4:
 				return ReadVec4(fileBytes, ref index);
 				
-				case AshFileType.Bool:
+				case AshFileTypeOld.Bool:
 				return ReadBool(fileBytes, ref index);
 				
-				case AshFileType.UbyteArray:
+				case AshFileTypeOld.UbyteArray:
 				return ReadUint1Array(fileBytes, ref index);
 				
-				case AshFileType.UshortArray:
+				case AshFileTypeOld.UshortArray:
 				return ReadUint2Array(fileBytes, ref index);
 				
-				case AshFileType.UintArray:
+				case AshFileTypeOld.UintArray:
 				return ReadUint4Array(fileBytes, ref index);
 				
-				case AshFileType.UlongArray:
+				case AshFileTypeOld.UlongArray:
 				return ReadUint8Array(fileBytes, ref index);
 				
-				case AshFileType.SbyteArray:
+				case AshFileTypeOld.SbyteArray:
 				return ReadInt1Array(fileBytes, ref index);
 				
-				case AshFileType.ShortArray:
+				case AshFileTypeOld.ShortArray:
 				return ReadInt2Array(fileBytes, ref index);
 				
-				case AshFileType.IntArray:
+				case AshFileTypeOld.IntArray:
 				return ReadInt4Array(fileBytes, ref index);
 				
-				case AshFileType.LongArray:
+				case AshFileTypeOld.LongArray:
 				return ReadInt8Array(fileBytes, ref index);
 				
-				case AshFileType.FloatArray:
+				case AshFileTypeOld.FloatArray:
 				return ReadFloat4Array(fileBytes, ref index);
 				
-				case AshFileType.DoubleArray:
+				case AshFileTypeOld.DoubleArray:
 				return ReadFloat8Array(fileBytes, ref index);
 				
-				case AshFileType.Date:
+				case AshFileTypeOld.Date:
 				return ReadDate(fileBytes, ref index);
 				
 				default:
@@ -526,66 +526,66 @@ public partial class AshFile{
 		
 		//Write
 		
-		private static AshFileType GetAshFileTypeFromType(Type type){
+		private static AshFileTypeOld GetAshFileTypeFromType(Type type){
 			if (type == typeof(byte[]))
-				return AshFileType.ByteArray;
+				return AshFileTypeOld.ByteArray;
 			else if (type == typeof(string))
-				return AshFileType.String;
+				return AshFileTypeOld.String;
 			else if (type == typeof(byte))
-				return AshFileType.Byte;
+				return AshFileTypeOld.Byte;
 			else if (type == typeof(ushort))
-				return AshFileType.Ushort;
+				return AshFileTypeOld.Ushort;
 			else if (type == typeof(uint))
-				return AshFileType.Uint;
+				return AshFileTypeOld.Uint;
 			else if (type == typeof(ulong))
-				return AshFileType.Ulong;
+				return AshFileTypeOld.Ulong;
 			else if (type == typeof(sbyte))
-				return AshFileType.Sbyte;
+				return AshFileTypeOld.Sbyte;
 			else if (type == typeof(short))
-				return AshFileType.Short;
+				return AshFileTypeOld.Short;
 			else if (type == typeof(int))
-				return AshFileType.Int;
+				return AshFileTypeOld.Int;
 			else if (type == typeof(long))
-				return AshFileType.Long;
+				return AshFileTypeOld.Long;
 			else if (type == typeof(Color3))
-				return AshFileType.Color;
+				return AshFileTypeOld.Color;
 			else if (type == typeof(float))
-				return AshFileType.Float;
+				return AshFileTypeOld.Float;
 			else if (type == typeof(double))
-				return AshFileType.Double;
+				return AshFileTypeOld.Double;
 			else if (type == typeof(bool))
-				return AshFileType.Bool;
+				return AshFileTypeOld.Bool;
 			else if (type == typeof(Date))
-				return AshFileType.Date;
+				return AshFileTypeOld.Date;
 			else if (type == typeof(Vec2))
-				return AshFileType.Vec2;
+				return AshFileTypeOld.Vec2;
 			else if (type == typeof(Vec3))
-				return AshFileType.Vec3;
+				return AshFileTypeOld.Vec3;
 			else if (type == typeof(Vec4))
-				return AshFileType.Vec4;
+				return AshFileTypeOld.Vec4;
 			// Add additional checks for array types (e.g., byte[], uint[], etc.)
 			else if (type == typeof(byte[]))
-				return AshFileType.UbyteArray;
+				return AshFileTypeOld.UbyteArray;
 			else if (type == typeof(ushort[]))
-				return AshFileType.UshortArray;
+				return AshFileTypeOld.UshortArray;
 			else if (type == typeof(uint[]))
-				return AshFileType.UintArray;
+				return AshFileTypeOld.UintArray;
 			else if (type == typeof(ulong[]))
-				return AshFileType.UlongArray;
+				return AshFileTypeOld.UlongArray;
 			else if (type == typeof(sbyte[]))
-				return AshFileType.SbyteArray;
+				return AshFileTypeOld.SbyteArray;
 			else if (type == typeof(short[]))
-				return AshFileType.ShortArray;
+				return AshFileTypeOld.ShortArray;
 			else if (type == typeof(int[]))
-				return AshFileType.IntArray;
+				return AshFileTypeOld.IntArray;
 			else if (type == typeof(long[]))
-				return AshFileType.LongArray;
+				return AshFileTypeOld.LongArray;
 			else if (type == typeof(float[]))
-				return AshFileType.FloatArray;
+				return AshFileTypeOld.FloatArray;
 			else if (type == typeof(double[]))
-				return AshFileType.DoubleArray;
+				return AshFileTypeOld.DoubleArray;
 			
-			return AshFileType.ByteArray;
+			return AshFileTypeOld.ByteArray;
 		}
 		
 		public static byte[] Write(Dictionary<string, object> d){
@@ -611,117 +611,117 @@ public partial class AshFile{
 			return bytes.ToArray();
 		}
 		
-		private static void WriteCampValue(List<byte> bytes, AshFileType t, object val){
+		private static void WriteCampValue(List<byte> bytes, AshFileTypeOld t, object val){
 			switch(t){
-				case AshFileType.ByteArray:
+				case AshFileTypeOld.ByteArray:
 				WriteByteArray(bytes, (byte[]) val);
 				return;
 				
-				case AshFileType.String:
+				case AshFileTypeOld.String:
 				WriteString(bytes, (string) val);
 				return;
 				
-				case AshFileType.Byte:
+				case AshFileTypeOld.Byte:
 				WriteUint1(bytes, (byte) val);
 				return;
 				
-				case AshFileType.Ushort:
+				case AshFileTypeOld.Ushort:
 				WriteUint2(bytes, (ushort) val);
 				return;
 				
-				case AshFileType.Uint:
+				case AshFileTypeOld.Uint:
 				WriteUint4(bytes, (uint) val);
 				return;
 				
-				case AshFileType.Ulong:
+				case AshFileTypeOld.Ulong:
 				WriteUint8(bytes, (ulong) val);
 				return;
 				
-				case AshFileType.Sbyte:
+				case AshFileTypeOld.Sbyte:
 				WriteInt1(bytes, (sbyte) val);
 				return;
 				
-				case AshFileType.Short:
+				case AshFileTypeOld.Short:
 				WriteInt2(bytes, (short) val);
 				return;
 				
-				case AshFileType.Int:
+				case AshFileTypeOld.Int:
 				WriteInt4(bytes, (int) val);
 				return;
 				
-				case AshFileType.Long:
+				case AshFileTypeOld.Long:
 				WriteInt8(bytes, (long) val);
 				return;
 				
-				case AshFileType.Color:
+				case AshFileTypeOld.Color:
 				WriteColor(bytes, (Color3) val);
 				return;
 				
-				case AshFileType.Float:
+				case AshFileTypeOld.Float:
 				WriteFloat4(bytes, (float) val);
 				return;
 				
-				case AshFileType.Double:
+				case AshFileTypeOld.Double:
 				WriteFloat8(bytes, (double) val);
 				return;
 				
-				case AshFileType.Vec2:
+				case AshFileTypeOld.Vec2:
 				WriteVec2(bytes, (Vec2) val);
 				return;
 				
-				case AshFileType.Vec3:
+				case AshFileTypeOld.Vec3:
 				WriteVec3(bytes, (Vec3) val);
 				return;
 				
-				case AshFileType.Vec4:
+				case AshFileTypeOld.Vec4:
 				WriteVec4(bytes, (Vec4) val);
 				return;
 				
-				case AshFileType.Bool:
+				case AshFileTypeOld.Bool:
 				WriteBool(bytes, (bool) val);
 				return;
 				
-				case AshFileType.UbyteArray:
+				case AshFileTypeOld.UbyteArray:
 				WriteUint1Array(bytes, (byte[]) val);
 				return;
 				
-				case AshFileType.UshortArray:
+				case AshFileTypeOld.UshortArray:
 				WriteUint2Array(bytes, (ushort[]) val);
 				return;
 				
-				case AshFileType.UintArray:
+				case AshFileTypeOld.UintArray:
 				WriteUint4Array(bytes, (uint[]) val);
 				return;
 				
-				case AshFileType.UlongArray:
+				case AshFileTypeOld.UlongArray:
 				WriteUint8Array(bytes, (ulong[]) val);
 				return;
 				
-				case AshFileType.SbyteArray:
+				case AshFileTypeOld.SbyteArray:
 				WriteInt1Array(bytes, (sbyte[]) val);
 				return;
 				
-				case AshFileType.ShortArray:
+				case AshFileTypeOld.ShortArray:
 				WriteInt2Array(bytes, (short[]) val);
 				return;
 				
-				case AshFileType.IntArray:
+				case AshFileTypeOld.IntArray:
 				WriteInt4Array(bytes, (int[]) val);
 				return;
 				
-				case AshFileType.LongArray:
+				case AshFileTypeOld.LongArray:
 				WriteInt8Array(bytes, (long[]) val);
 				return;
 				
-				case AshFileType.FloatArray:
+				case AshFileTypeOld.FloatArray:
 				WriteFloat4Array(bytes, (float[]) val);
 				return;
 				
-				case AshFileType.DoubleArray:
+				case AshFileTypeOld.DoubleArray:
 				WriteFloat4Array(bytes, (double[]) val);
 				return;
 				
-				case AshFileType.Date:
+				case AshFileTypeOld.Date:
 				WriteDate(bytes, (Date) val);
 				return;
 			}

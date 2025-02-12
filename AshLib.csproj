@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PackageId>AshLib</PackageId>
-    <Version>3.0.1</Version>
+    <Version>3.1.0</Version>
     <Authors>siljam</Authors>
     <Company>AshProject</Company>
 	<PackageDescription>Some utilities</PackageDescription>
