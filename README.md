@@ -18,12 +18,15 @@ Utility that will help you produce a Collapsible and idented log for making debu
 ## FormatString
 A formatted string, for displaying colored(and more options!) text in the console
 
-## Dependencies
-This utility helps you handle files in a project, using a folder similar to the .minecraft folder
-
 ## Dates
 This is a struct that represents a time, down to seconds, between the years 1488 and 2511.
 Its main attraction is you can convert this Date int just 6 base64 printable chars. This is called s CPTF(Compressed printable date format)
+
+## Trees
+Trees are graphs made of nodes, that have a value of any type and child nodes. They are useful for a multitude of reasons. There is support for a string format
+
+## Dependencies
+This utility helps you handle files in a project, using a folder similar to the .minecraft folder
 
 ## Outadated
 ### TODO: UPDATE DOCS

@@ -6,6 +6,7 @@ namespace AshLib.AshFiles;
 
 public partial class AshFile{
 	protected internal class V3{
+		#region read
 		//Read
 		public static Dictionary<string, object> Read(byte[] fileBytes, out AshFileFormatConfig conf){
 			Dictionary<string, object> dic = new Dictionary<string, object>();
@@ -340,6 +341,9 @@ public partial class AshFile{
 			ind = 0;
 			return f;
 		}
+		#endregion
+		
+		#region write
 		
 		//Write
 		public static byte[] Write(Dictionary<string, object> d, AshFileFormatConfig conf){
@@ -673,5 +677,6 @@ public partial class AshFile{
 			
 			return b;
 		}
+		#endregion
 	}
 }

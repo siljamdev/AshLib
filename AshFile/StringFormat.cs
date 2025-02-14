@@ -488,6 +488,7 @@ public partial class AshFile{
 			
 			if(s[index] == '"'){
 				if(previousEscape){
+					sb.Remove(sb.Length - 1, 1);
 					sb.Append(s[index]);
 					previousEscape = false;
 					index++;

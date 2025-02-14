@@ -3,8 +3,8 @@ using AshLib.Dates;
 
 namespace AshLib.AshFiles;
 
-public partial class AshFile
-{
+public partial class AshFile{
+	
 	public bool ExistsCamp(string name){
 		if(this.data.ContainsKey(name)){
 			return true;
