@@ -7,12 +7,14 @@ public class AshFileModel{
 	
 	public bool allowUnsupportedTypes;
 	public bool deleteNotMentioned;
-	public ModelInstance[] instances;
+	public List<ModelInstance> instances{get;}
+	public List<Action<AshFile, string, object>> actions{get;}
 	
 	public static readonly AshFileModel DeleteUnsupportedTypes = new AshFileModel();
 	
-	public AshFileModel(params ModelInstance[] m){
-		instances = m;
+	public AshFileModel(params ModelInstance[] insArray){
+		instances = insArray.ToList();
+		actions = new List<Action<AshFile, string, object>>();
 		allowUnsupportedTypes = true;
 		deleteNotMentioned = false;
 	}
@@ -28,15 +30,15 @@ public class ModelInstance{
 	public string name;
 	public object value;
 	
-	public ModelInstance(ModelInstanceOperation o, string n, object v){
+	public ModelInstance(ModelInstanceOperation o, string nam, object val){
 		operation = o;
-		name = n;
-		value = v;
+		name = nam;
+		value = val;
 	}
 }
 
 public enum ModelInstanceOperation{
-	Delete, Exists, Type, TypeCast, Value
+	Delete, Exists, Type, TypeCast, Value, None
 }
 
 public partial class AshFile{
@@ -92,7 +94,7 @@ public partial class AshFile{
 		}
 		
 		if(m.deleteNotMentioned && m.instances != null){
-			List<string> names = new List<string>(m.instances.Length);
+			List<string> names = new List<string>(m.instances.Count);
 			foreach(ModelInstance i in m.instances){
 				names.Add(i.name);
 			}
@@ -100,6 +102,14 @@ public partial class AshFile{
 			foreach(KeyValuePair<string, object> kvp in a.data){
 				if(!names.Contains(kvp.Key)){
 					a.DeleteCamp(kvp.Key);
+				}
+			}
+		}
+		
+		if(m.actions != null){
+			foreach(KeyValuePair<string, object> kvp in a.data){
+				foreach(Action<AshFile, string, object> act in m.actions){
+					act(a, kvp.Key, kvp.Value);
 				}
 			}
 		}

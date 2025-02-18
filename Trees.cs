@@ -16,14 +16,14 @@ public class TreeNode<T>{
 		return parent == null;
 	}}
 	
-	public TreeNode(T v){
-		value = v;
+	public TreeNode(T val){
+		value = val;
 		children = new List<TreeNode<T>>();
 	}
 	
-	public TreeNode(T v, List<TreeNode<T>> c){
-		value = v;
-		children = c;
+	public TreeNode(T val, List<TreeNode<T>> childlist){
+		value = val;
+		children = childlist;
 	}
 	
 	public TreeNode<T> FindRoot(){
@@ -34,14 +34,14 @@ public class TreeNode<T>{
 		}
 	}
 	
-	public void AddChild(TreeNode<T> n){
-		n.parent = this;
-		children.Add(n);
+	public void AddChild(TreeNode<T> node){
+		node.parent = this;
+		children.Add(node);
 	}
 	
-	public bool RemoveChild(TreeNode<T> n){
-		n.parent = null;
-		return children.Remove(n);
+	public bool RemoveChild(TreeNode<T> node){
+		node.parent = null;
+		return children.Remove(node);
 	}
 	
 	public void ClearChildren(){
@@ -98,7 +98,7 @@ public class TreeNode<T>{
 		return list;
 	}
 	
-	public List<TreeNode<T>> GetLeafNodes(){
+	public List<TreeNode<T>> GetAllLeafNodes(){
 		List<TreeNode<T>> list = new List<TreeNode<T>>();
 		
 		if(isLeaf){
@@ -112,27 +112,27 @@ public class TreeNode<T>{
 		return list;
 	}
 	
-	public void TraversePreOrder(Action<TreeNode<T>> a){
-		a(this);
+	public void TraversePreOrder(Action<TreeNode<T>> action){
+		action(this);
 		foreach(TreeNode<T> n in children){
-			n.TraversePreOrder(a);
+			n.TraversePreOrder(action);
 		}
 	}
 	
-	public void TraversePostOrder(Action<TreeNode<T>> a){
+	public void TraversePostOrder(Action<TreeNode<T>> action){
 		foreach(TreeNode<T> n in children){
-			n.TraversePostOrder(a);
+			n.TraversePostOrder(action);
 		}
-		a(this);
+		action(this);
 	}
 	
-	public void TraverseLevelOrder(Action<TreeNode<T>> a){
+	public void TraverseLevelOrder(Action<TreeNode<T>> action){
 		Queue<TreeNode<T>> queue = new Queue<TreeNode<T>>();
 		queue.Enqueue(this);
 		
 		while(queue.Count > 0){
 			TreeNode<T> n = queue.Dequeue();
-			a(n);
+			action(n);
 			
 			foreach(TreeNode<T> c in n.children){
 				queue.Enqueue(c);
@@ -167,7 +167,7 @@ public class TreeNode<T>{
 	public int GetDepth(){
 		int d = 0;
 		
-		TreeNode<T>? c = this;
+		TreeNode<T>? c = this.parent;
 		while(c != null){
 			d++;
 			c = c.parent;
@@ -191,7 +191,7 @@ public class TreeNode<T>{
 		return null;
 	}
 	
-	public TreeNode<T>? FindChildrenNode(T target){		
+	public TreeNode<T>? FindChildNode(T target){		
 		foreach(TreeNode<T> n in children){
 			if(EqualityComparer<T>.Default.Equals(n.value, target)){
 				return n;
@@ -231,7 +231,7 @@ public class TreeNode<T>{
 		return null;
 	}
 	
-	public TreeNode<T>? FindChildrenNode(Func<TreeNode<T>, bool> condition){		
+	public TreeNode<T>? FindChildNode(Func<TreeNode<T>, bool> condition){		
 		foreach(TreeNode<T> n in children){
 			if(condition(n)){
 				return n;
@@ -241,7 +241,7 @@ public class TreeNode<T>{
 		return null;
 	}
 	
-	public TreeNode<T>? FindChildrenNode(Func<T, bool> condition){		
+	public TreeNode<T>? FindChildNode(Func<T, bool> condition){		
 		foreach(TreeNode<T> n in children){
 			if(condition(n.value)){
 				return n;
@@ -321,12 +321,12 @@ public class TreeNode<T>{
 		return sb.ToString();
 	}
 	
-	public static bool TryParseStringFormat(string s, out TreeNode<string> tt){
+	public static bool TryParseStringFormat(string s, out TreeNode<string> tree){
 		try{
-			tt = ParseStringFormat(s);
+			tree = ParseStringFormat(s);
 			return true;
 		}catch{
-			tt = null;
+			tree = null;
 			return false;
 		}
 	}
@@ -384,12 +384,12 @@ public class TreeNode<T>{
 		return r;
 	}
 	
-	public static bool TryParseStringFormat(string s, Func<string, T> parseFunc, out TreeNode<T> tt){
+	public static bool TryParseStringFormat(string s, Func<string, T> parseFunc, out TreeNode<T> tree){
 		try{
-			tt = ParseStringFormat(s, parseFunc);
+			tree = ParseStringFormat(s, parseFunc);
 			return true;
 		}catch{
-			tt = null;
+			tree = null;
 			return false;
 		}
 	}

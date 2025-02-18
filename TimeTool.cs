@@ -8,7 +8,7 @@ public class TimeTool{ //Used to get info about times
     Stopwatch sw;
     double breakPoint;
 	
-    public string[] categoryNames;
+    public string[] categoryNames {get;}
     double[] times;
 	
     List<double[]> history = new List<double[]>();
@@ -19,9 +19,9 @@ public class TimeTool{ //Used to get info about times
 	
 	private readonly object lockObj = new object();
 	
-    public TimeTool(params string[] catNames){
+    public TimeTool(params string[] categNames){
         sw = new Stopwatch();
-        categoryNames = catNames;
+        categoryNames = categNames;
     }
 	
 	public void Reset(){
@@ -31,7 +31,7 @@ public class TimeTool{ //Used to get info about times
 		}
     }
 	
-    public void TickStart(){
+    public void LoopStart(){
 		lock(lockObj){
 			sw.Restart();
 			breakPoint = 0d;
@@ -40,7 +40,7 @@ public class TimeTool{ //Used to get info about times
 		}
     }
 	
-    public void CatEnd(){
+    public void CategoryEnd(){
 		lock(lockObj){
 			double t = (double)sw.ElapsedTicks / Stopwatch.Frequency * 1e9;
 			times[timeWriting] += t - breakPoint;
@@ -49,7 +49,7 @@ public class TimeTool{ //Used to get info about times
 		}
     }
 	
-	public void CatEnd(int i){
+	public void CategoryEnd(int i){
 		lock(lockObj){
 			double t = (double)sw.ElapsedTicks / Stopwatch.Frequency * 1e9;
 			times[i] += t - breakPoint;
@@ -58,7 +58,7 @@ public class TimeTool{ //Used to get info about times
 		}
     }
 	
-    public void TickEnd(){
+    public void LoopEnd(){
 		lock(lockObj){
 			sw.Stop();
 			
@@ -73,13 +73,13 @@ public class TimeTool{ //Used to get info about times
 		}
     }
 	
-	public double[] LastTickInfo(){
+	public double[] LastLoopInfo(){
 		lock(lockObj){
 			return (double[])times.Clone();
 		}
 	}
 	
-    public string LastTickString(){
+    public string LastLoopString(){
 		StringBuilder sb = new StringBuilder();
 		
 		lock(lockObj){
@@ -184,7 +184,7 @@ public class TimeTool{ //Used to get info about times
 			sb.AppendLine(new string('─', maxCategoryNameWidth) + "┤╶" + new string('─', 12) + "─┤╶" + new string('─', 12) + "─┤");
 			sb.AppendLine("Total".PadRight(maxCategoryNameWidth) + "│" + String.Format("{0,13:N0}", maxTimes[categoryNames.Length]) + " │" + String.Format("{0,13:N0}", averageTimes[categoryNames.Length]) + " │");
 			sb.AppendLine(new string('─', maxCategoryNameWidth) + "┤╶" + new string('─', 12) + "─┤╶" + new string('─', 12) + "─┤");
-			sb.AppendLine("Ticks".PadRight(maxCategoryNameWidth) + "│" + String.Format("{0,13:N0}", history.Count) + " │" + String.Format("{0,10:N1} hz", 1000000000d / averageTimes[categoryNames.Length]) + " │");
+			sb.AppendLine("Loops".PadRight(maxCategoryNameWidth) + "│" + String.Format("{0,13:N0}", history.Count) + " │" + String.Format("{0,10:N1} hz", 1000000000d / averageTimes[categoryNames.Length]) + " │");
 		}
         
         return sb.ToString();

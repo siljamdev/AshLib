@@ -125,7 +125,7 @@ public class FormatString{
 	public List<CharFormat?> format{get;}
 	
 	private string _built;
-	public string built {get{
+	public string built{get{
 		#if WINDOWS
 		if(!hasConsoleBeenPrepared){
 			PrepareConsole();
@@ -379,13 +379,13 @@ public class FormatString{
 				while(true){
 					bool increment = false;
 					switch(UntilNextComma(s, ref x).ToUpper()){
-						case "B":
+						case "B": //Bold density
 						f = new CharFormat(1, f.italic, f.underline, f.strikeThrough, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						hasChanged = true;
 						increment = true;
 						break;
 						
-						case "T":
+						case "T": //Thin density
 						f = new CharFormat(2, f.italic, f.underline, f.strikeThrough, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						hasChanged = true;
 						increment = true;
@@ -393,49 +393,49 @@ public class FormatString{
 						
 						case "RT":
 						case "RD":
-						case "D":
+						case "D": //Normal density
 						f = new CharFormat(0, f.italic, f.underline, f.strikeThrough, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						hasChanged = true;
 						increment = true;
 						break;
 						
-						case "I":
+						case "I": //Italic
 						f = new CharFormat(f.density, true, f.underline, f.strikeThrough, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						increment = true;
 						break;
 						
-						case "RI":
+						case "RI": //No italic
 						f = new CharFormat(f.density, false, f.underline, f.strikeThrough, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						increment = true;
 						break;
 						
-						case "U":
+						case "U": //Underlined
 						f = new CharFormat(f.density, f.italic, 1, f.strikeThrough, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						increment = true;
 						break;
 						
-						case "DU":
+						case "DU": //Double underline
 						f = new CharFormat(f.density, f.italic, 2, f.strikeThrough, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						increment = true;
 						break;
 						
-						case "RU":
+						case "RU": //No underline
 						f = new CharFormat(f.density, f.italic, 0, f.strikeThrough, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						increment = true;
 						break;
 						
-						case "S":
+						case "S": //Strike-Through
 						f = new CharFormat(f.density, f.italic, f.underline, true, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						increment = true;
 						break;
 						
-						case "RS":
+						case "RS": //No strikeThrough
 						f = new CharFormat(f.density, f.italic, f.underline, false, f.foreground, f.foregroundReset, f.background, f.backgroundReset);
 						increment = true;
 						break;
 						
 						case "C":
-						case "F":
+						case "F": //Foreground color in RGB
 						byte r;
 						if(!byte.TryParse(UntilNextComma(s, ref x), out r)){
 							break;
@@ -453,20 +453,23 @@ public class FormatString{
 						break;
 						
 						case "C#":
-						case "F#":
+						case "F#": //Foreground color in hex
 						string h = UntilNextComma(s, ref x);
-						Color3 v = new Color3(h);
+						Color3 v;
+						if(!Color3.TryParse(h, out v)){
+							break;
+						}
 						f = new CharFormat(f.density, f.italic, f.underline, f.strikeThrough, v, f.foregroundReset, f.background, f.backgroundReset);
 						increment = true;
 						break;
 						
 						case "RC":
-						case "RF":
+						case "RF": //Reset foreground color
 						f = new CharFormat(f.density, f.italic, f.underline, f.strikeThrough, f.foreground, true, f.background, f.backgroundReset);
 						increment = true;
 						break;
 						
-						case "BG":
+						case "BG": //background color RGB
 						if(!byte.TryParse(UntilNextComma(s, ref x), out r)){
 							break;
 						}
@@ -480,19 +483,21 @@ public class FormatString{
 						increment = true;
 						break;
 						
-						case "BG#":
+						case "BG#": //Background color hex
 						h = UntilNextComma(s, ref x);
-						v = new Color3(h);
+						if(!Color3.TryParse(h, out v)){
+							break;
+						}
 						f = new CharFormat(f.density, f.italic, f.underline, f.strikeThrough, f.foreground, f.foregroundReset, v, f.backgroundReset);
 						increment = true;
 						break;
 						
-						case "RB":
+						case "RB": //Reset background color
 						f = new CharFormat(f.density, f.italic, f.underline, f.strikeThrough, f.foreground, f.foregroundReset, f.background, true);
 						increment = true;
 						break;
 						
-						case "0":
+						case "0": //Reset all
 						f = new CharFormat(0, false, 0, false, null, true, null, true);
 						increment = true;
 						break;
@@ -583,12 +588,12 @@ public class FormatString{
 		flagToBuild = true;
 	}
 	
-	public void Delete(int n, int l){
-		if(l > length){
+	public void Delete(int si, int n){
+		if(n > length){
 			return;
 		}
-		privateContent.RemoveRange(n, l);
-		format.RemoveRange(n, l);
+		privateContent.RemoveRange(si, n);
+		format.RemoveRange(si, n);
 		flagToBuild = true;
 	}
 	

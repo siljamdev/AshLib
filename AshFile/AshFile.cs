@@ -355,26 +355,26 @@ public struct AshFileFormatConfig{
 	
 	public static readonly AshFileFormatConfig Default = new AshFileFormatConfig(true, true, true);
 	
-	public AshFileFormatConfig(bool b1, bool b2, bool b3){
-		compactBools = b1;
-		maskCampNames = b2;
-		maskStrings = b3;
+	public AshFileFormatConfig(bool compactBoo, bool maskCampNam, bool maskStr){
+		compactBools = compactBoo;
+		maskCampNames = maskCampNam;
+		maskStrings = maskStr;
 	}
 	
-	public AshFileFormatConfig(byte b){
-		if((b & 1) == 1){
+	public AshFileFormatConfig(byte compactByte){
+		if((compactByte & 1) == 1){
 			compactBools = true;
 		}else{
 			compactBools = false;
 		}
 		
-		if((b & 2) == 2){
+		if((compactByte & 2) == 2){
 			maskCampNames = true;
 		}else{
 			maskCampNames = false;
 		}
 		
-		if((b & 4) == 4){
+		if((compactByte & 4) == 4){
 			maskStrings = true;
 		}else{
 			maskStrings = false;

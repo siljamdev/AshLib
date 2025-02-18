@@ -44,13 +44,13 @@ public struct Color3{ //Just for holding the data of a RGB color
 		return new Color3(r, g, b);
 	}
 	
-	public static bool TryParse(string hex, out Color3 c){
+	public static bool TryParse(string hex, out Color3 col){
 		if(hex.StartsWith("#")){
             hex = hex.Substring(1);
         }
 		
 		if(hex.Length != 6){
-			c = new Color3(0, 0, 0);
+			col = new Color3(0, 0, 0);
             return false;
         }
 		
@@ -59,20 +59,20 @@ public struct Color3{ //Just for holding the data of a RGB color
 			byte g = byte.Parse(hex.Substring(2, 2).Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
 			byte b = byte.Parse(hex.Substring(4, 2).Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
 			
-			c = new Color3(r, g, b);
+			col = new Color3(r, g, b);
 			return true;
 		}catch{
-			c = new Color3(0, 0, 0);
+			col = new Color3(0, 0, 0);
 			return false;
 		}
 	}
 	
-	public static implicit operator System.Drawing.Color(Color3 c){ //Can cast from and to the System.Drawing
-		return System.Drawing.Color.FromArgb(c.R, c.G, c.B);
+	public static implicit operator System.Drawing.Color(Color3 col){ //Can cast from and to the System.Drawing
+		return System.Drawing.Color.FromArgb(col.R, col.G, col.B);
 	}
 	
-	public static implicit operator Color3(System.Drawing.Color c){
-		return new Color3(c.R, c.G, c.B);
+	public static implicit operator Color3(System.Drawing.Color col){
+		return new Color3(col.R, col.G, col.B);
 	}
 	
 	public static bool operator ==(Color3 a, Color3 b){
