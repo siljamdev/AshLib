@@ -16,7 +16,7 @@ public partial class AshFile{
 			TreeNode<string> c = root;
 			int i = 0;
 			while(i < p.Length){
-				TreeNode<string>? t = c.FindChildrenNode(p[i]);
+				TreeNode<string>? t = c.FindChildNode(p[i]);
 				if(t == null){
 					break;
 				}

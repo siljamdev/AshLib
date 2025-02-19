@@ -105,7 +105,7 @@ public class TreeNode<T>{
 			list.Add(this);
 		}else{
 			foreach(TreeNode<T> n in children){
-				list.AddRange(n.GetLeafNodes());
+				list.AddRange(n.GetAllLeafNodes());
 			}
 		}
 		
