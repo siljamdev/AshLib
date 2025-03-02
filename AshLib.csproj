@@ -12,6 +12,10 @@
     <RepositoryUrl>https://github.com/siljamdev/AshLib</RepositoryUrl>
   </PropertyGroup>
   
+  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
+    <DefineConstants>WINDOWS</DefineConstants>
+  </PropertyGroup>
+  
   <ItemGroup>
 	<Compile Remove="documentation/**" />
   </ItemGroup>
