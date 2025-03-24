@@ -3,6 +3,7 @@
 Library that comes with multiple utilities
 
 ## Documentation
+**ALL DOCUMENTATION IS HAND MADE**
 For a more detailed explanation, you can visit the [Usage Documentation](./documentation/AshLibUsageDocumentation.pdf)
 For a more practical explanation in the form of examples, you can visit the [Examples](./documentation/examples)
 For a reference on everything, you can visit the [Reference Documentation](./documentation/AshLibReferenceDocumentation.pdf)
@@ -19,7 +20,7 @@ This little utility will make it easy to calculate fps and deltaTime. You just n
 Utility that helps you debug time related stuff(for example, the percentage operations are taking each frame)
 
 ## TreeLog
-Utility that will help you produce a Collapsible and idented log for making debugging easier. There is a notepad++ custom language in [here](./n++)
+Utility that will help you produce a Collapsible and idented log for making debugging easier. There is a notepad++ custom language in [here](./n++). Note that this custom language is thought for the dark theme
 
 ## FormatString
 A formatted string, for displaying colored(and more options!) text in the console
