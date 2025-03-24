@@ -5,11 +5,9 @@ Library that comes with multiple utilities
 ## Documentation
 **ALL DOCUMENTATION IS HAND MADE**
 
-For a more detailed explanation, you can visit the [Usage Documentation](./documentation/AshLibUsageDocumentation.pdf)
-
-For a more practical explanation in the form of examples, you can visit the [Examples](./documentation/examples)
-
-For a reference on everything, you can visit the [Reference Documentation](./documentation/AshLibReferenceDocumentation.pdf)
+For a more detailed explanation, you can visit the [Usage Documentation](./documentation/AshLibUsageDocumentation.pdf)  
+For a more practical explanation in the form of examples, you can visit the [Examples](./documentation/examples)  
+For a reference on everything, you can visit the [Reference Documentation](./documentation/AshLibReferenceDocumentation.pdf)  
 
 ## AshFile
 An AshFile is a data structure composed of camps. Each camp has a name and a value. This value can be of different types(numbers, text...)
