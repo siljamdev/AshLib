@@ -1,5 +1,11 @@
 # AshLib
+![Icon of the library](res/icon.png | width=200)
 Library that comes with multiple utilities
+
+## Documentation
+For a more detailed explanation, you can visit the [Usage Documentation](./documentation/AshLibUsageDocumentation.pdf)
+For a more practical explanation in the form of examples, you can visit the [Examples](./documentation/examples)
+For a reference on everything, you can visit the [Reference Documentation](./documentation/AshLibReferenceDocumentation.pdf)
 
 ## AshFile
 An AshFile is a data structure composed of camps. Each camp has a name and a value. This value can be of different types(numbers, text...)
@@ -28,8 +34,5 @@ Trees are graphs made of nodes, that have a value of any type and child nodes. T
 ## Dependencies
 This utility helps you handle files in a project, using a folder similar to the .minecraft folder
 
-## Outadated
-### TODO: UPDATE DOCS
-For a more detailed explanation, you can visit the [Usage Documentation](./documentation/AshLibUsageDocumentation.pdf)
-For a more practical explanation in the form of examples, you can visit the [Examples](./documentation/examples)
-For a reference on everything, you can visit the [Reference Documentation](./documentation/AshLibReferenceDocumentation.pdf)
+## Colors and Vectors
+This library comes with structs for RGB colors and 2,3 and 4 dimension vectors
