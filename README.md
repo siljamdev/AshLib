@@ -1,5 +1,5 @@
 # AshLib
-![Icon of the library](res/icon.png)
+<img src="res/icon.png" width="200"/>
 Library that comes with multiple utilities
 
 ## Documentation
