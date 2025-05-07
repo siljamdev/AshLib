@@ -116,6 +116,8 @@ public class FormatString{
 	private static bool hasConsoleBeenPrepared = false;
 	#endif
 	
+	private static bool usesColors = true;
+	
 	public bool addFinalReset = true;
 	
 	public string content{get{
@@ -145,6 +147,13 @@ public class FormatString{
 	
 	private bool flagToBuild;
 	
+	static FormatString(){
+		string noColor = Environment.GetEnvironmentVariable("NO_COLOR");
+		if(noColor != null){
+			usesColors = false;
+		}
+	}
+	
 	public FormatString(){
 		privateContent = new List<char>();
 		format = new List<CharFormat?>();
@@ -157,6 +166,9 @@ public class FormatString{
 	
 	#if WINDOWS
 	private static void PrepareConsole(){
+		if(!usesColors){
+			return;
+		}
 		var iStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
         var _ = GetConsoleMode(iStdOut, out var outConsoleMode)
         && SetConsoleMode(iStdOut, outConsoleMode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
@@ -263,7 +275,7 @@ public class FormatString{
 				}
 			}
 			
-			if(lastFormat == null || (current.foreground != lastFormat.foreground && current.foreground != null) || current.foregroundReset == true){
+			if((lastFormat == null || (current.foreground != lastFormat.foreground && current.foreground != null) || current.foregroundReset == true) && usesColors){
 				if(current.foregroundReset == true){
 					formatChanges = true;
 					changes.Add("39");
@@ -278,7 +290,7 @@ public class FormatString{
 				}
 			}
 			
-			if(lastFormat == null || (current.background != lastFormat.background && current.background != null) || current.backgroundReset == true){
+			if((lastFormat == null || (current.background != lastFormat.background && current.background != null) || current.backgroundReset == true) && usesColors){
 				if(current.backgroundReset == true){
 					formatChanges = true;
 					changes.Add("49");

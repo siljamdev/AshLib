@@ -12,8 +12,8 @@
     <RepositoryUrl>https://github.com/siljamdev/AshLib</RepositoryUrl>
   </PropertyGroup>
   
-  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-    <DefineConstants>WINDOWS</DefineConstants>
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win-x86' Or '$(RuntimeIdentifier)' == 'win-arm64'">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
   
   <ItemGroup>
