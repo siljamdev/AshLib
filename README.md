@@ -25,6 +25,7 @@ Utility that will help you produce a Collapsible and idented log for making debu
 
 ## FormatString
 A formatted string, for displaying colored(and more options!) text in the console
+It supporsts NO_COLOR environment variable. Read more [here](https://no-color.org/)
 
 ## Dates
 This is a struct that represents a time, down to seconds, between the years 1488 and 2511.
