@@ -11,11 +11,13 @@ public class CharFormat{
 	public bool? strikeThrough{get;} 
 	
 	public Color3? foreground{get;} //null is skip
-	public bool? foregroundReset{get;}
+	public bool foregroundReset{get;}
 	public Color3? background{get;} //null is skip
-	public bool? backgroundReset{get;}
+	public bool backgroundReset{get;}
 	
-	public CharFormat(byte? dens, bool? ital, byte? uline, bool? sthrough, Color3? fgcolor, bool? fgreset, Color3? bgcolor, bool? bgreset){
+	public static CharFormat ResetAll = new CharFormat(0, false, 0, false, null, true, null, true);
+	
+	public CharFormat(byte? dens, bool? ital, byte? uline, bool? sthrough, Color3? fgcolor, bool fgreset, Color3? bgcolor, bool bgreset){
 		density = dens;
 		italic = ital;
 		underline = uline;
@@ -37,6 +39,17 @@ public class CharFormat{
 		backgroundReset = bgreset;
 	}
 	
+	public CharFormat(Color3? fgcolor, Color3? bgcolor){
+		density = null;
+		italic = null;
+		underline = null;
+		strikeThrough = null;
+		foreground = fgcolor;
+		foregroundReset = false;
+		background = bgcolor;
+		backgroundReset = false;
+	}
+	
 	public CharFormat(Color3? fgcolor, bool fgreset){
 		density = null;
 		italic = null;
@@ -44,6 +57,17 @@ public class CharFormat{
 		strikeThrough = null;
 		foreground = fgcolor;
 		foregroundReset = fgreset;
+		background = null;
+		backgroundReset = false;
+	}
+	
+	public CharFormat(Color3? fgcolor){
+		density = null;
+		italic = null;
+		underline = null;
+		strikeThrough = null;
+		foreground = fgcolor;
+		foregroundReset = false;
 		background = null;
 		backgroundReset = false;
 	}
@@ -95,9 +119,10 @@ public class CharFormat{
     }
 }
 
-public class FormatString{
+public class FormatString : IEnumerable<(char, CharFormat)>{
 	
-	#if WINDOWS
+	//WINDOWS TERMINAL THINGS
+	#region W
     private const int  STD_OUTPUT_HANDLE = -11;
     private const uint ENABLE_PROCESSED_OUTPUT = 0x0001;
     private const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
@@ -114,9 +139,9 @@ public class FormatString{
 	//================================
 	
 	private static bool hasConsoleBeenPrepared = false;
-	#endif
+	#endregion W
 	
-	private static bool usesColors = true;
+	public static bool usesColors = true;
 	
 	public bool addFinalReset = true;
 	
@@ -128,12 +153,10 @@ public class FormatString{
 	
 	private string _built;
 	public string built{get{
-		#if WINDOWS
-		if(!hasConsoleBeenPrepared){
+		if(!hasConsoleBeenPrepared && RuntimeInformation.IsOSPlatform(OSPlatform.Windows)){
 			PrepareConsole();
 			hasConsoleBeenPrepared = true;
 		}
-		#endif
 		
 		if(flagToBuild){
 			Build();
@@ -160,25 +183,50 @@ public class FormatString{
 		flagToBuild = true;
 	}
 	
+	public FormatString(FormatString fs) : this(){
+		Append(fs);
+	}
+	
 	public FormatString(string s) : this(){
 		Append(s);
 	}
 	
-	#if WINDOWS
-	private static void PrepareConsole(){
-		if(!usesColors){
-			return;
+	public FormatString(string s, CharFormat? f) : this(){
+		Append(s, f);
+	}
+	
+	#region IEnumerator
+	public IEnumerator<(char, CharFormat)> GetEnumerator(){
+		for(int i = 0; i < privateContent.Count; i++){
+			yield return (privateContent[i], format[i]);
 		}
+	}
+	
+	//IEnumerable method
+	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator(){
+		return GetEnumerator();
+	}
+	#endregion IEnumerator
+	
+	private static void PrepareConsole(){
 		var iStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
         var _ = GetConsoleMode(iStdOut, out var outConsoleMode)
         && SetConsoleMode(iStdOut, outConsoleMode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 	}
-	#endif
 	
 	public void Clear(){
 		privateContent.Clear();
 		format.Clear();
 		flagToBuild = true;
+	}
+	
+	public FormatString Clone(){
+		return Clone(this);
+	}
+	
+	public static FormatString Clone(FormatString fs){
+		FormatString f = new FormatString(fs);
+		return f;
 	}
 	
 	private void Build(){
@@ -326,6 +374,9 @@ public class FormatString{
 	}
 	
 	public void Append(string s, CharFormat? f){
+		if(string.IsNullOrEmpty(s)){
+			return;
+		}
 		privateContent.AddRange(s.ToCharArray());
 		for(int i = 0; i < s.Length; i++){
 			format.Add(f);
@@ -334,7 +385,13 @@ public class FormatString{
 	}
 	
 	public void Append(object s, CharFormat? f){
+		if(s == null){
+			return;
+		}
 		string o = s.ToString();
+		if(string.IsNullOrEmpty(o)){
+			return;
+		}
 		privateContent.AddRange(o.ToCharArray());
 		for(int i = 0; i < o.Length; i++){
 			format.Add(f);
@@ -343,6 +400,9 @@ public class FormatString{
 	}
 	
 	public void Append(string s, CharFormat?[] f){
+		if(string.IsNullOrEmpty(s) || f == null){
+			return;
+		}
 		if(s.Length != f.Length){
 			return;
 		}
@@ -354,12 +414,18 @@ public class FormatString{
 	}
 	
 	public void Append(FormatString f){
+		if(f == null){
+			return;
+		}
 		privateContent.AddRange(f.privateContent.ToArray());
 		format.AddRange(f.format.ToArray());
 		flagToBuild = true;
 	}
 	
-	public void Append(string s, params object[] objs){
+	/* public void Append(string s, params object[] objs){
+		if(string.IsNullOrEmpty(s) || objs == null){
+			return;
+		}
 		StringBuilder sb = new StringBuilder();
 		for(int i = 0; i < s.Length; i++){
 			if(s[i] == '{' && s[i+1] == '$'){
@@ -376,12 +442,15 @@ public class FormatString{
 		}
 		Append(sb.ToString());
 		flagToBuild = true;
-	}
+	} */
 	
 	public void Append(string s){
+		if(string.IsNullOrEmpty(s)){
+			return;
+		}
 		CharFormat lastFormat = null;
 		for(int i = 0; i < s.Length; i++){
-			if(s[i] == '/' && s[i+1] == '['){
+			if(s[i] == '/' && i + 1 < s.Length && s[i+1] == '[' && (i == 0 || s[i-1] != '\\')){
 				int x = i;
 				x += 2;
 				
@@ -520,7 +589,7 @@ public class FormatString{
 						hasChanged = true;
 					}
 					
-					if(s[x] == ']'){
+					if(x >= s.Length || s[x] == ']'){
 						break;
 					}
 				}
@@ -532,6 +601,11 @@ public class FormatString{
 					lastFormat = f;
 				}
 			}
+			
+			if(s[i] == '\\' && i + 2 < s.Length && s[i+1] == '/' && s[i+2] == '['){
+				continue;
+			}
+			
 			if(i > s.Length - 1){
 				continue;
 			}
@@ -562,7 +636,7 @@ public class FormatString{
 		}
 	}
 	
-	private string UntilNextCurlyBrace(string s, ref int index){
+	/* private string UntilNextCurlyBrace(string s, ref int index){
 		StringBuilder sb = new StringBuilder();
 		int ind = index;
 		while(true){
@@ -577,20 +651,81 @@ public class FormatString{
 			sb.Append(s[ind]);
 			ind++;
 		}
+	} */
+	
+	public FormatString Substring(int si, int n){
+		if(si < 0 || n < 0 || si >= length){
+			return new FormatString();
+		}
+		
+		if(si + n > length){
+			n = length - si;
+		}
+		
+		FormatString f = new FormatString();
+		f.Append(new string(privateContent.GetRange(si, n).ToArray()), format.GetRange(si, n).ToArray());
+		
+		return f;
+	}
+	
+	public FormatString[] SplitIntoLines(){
+		List<FormatString> l = new();
+		
+		int s = 0;
+		
+		int i;
+		for(i = 0; i < privateContent.Count; i++){
+			if(privateContent[i] == '\r'){
+				if(i + 1 < privateContent.Count && privateContent[i + 1] == '\n'){
+					i++;
+					FormatString f = new FormatString();
+					f.Append(new string(privateContent.GetRange(s, i - s).ToArray()), format.GetRange(s, i - s).ToArray());
+					l.Add(f);
+					s = i + 1;
+				}else{
+					FormatString f = new FormatString();
+					f.Append(new string(privateContent.GetRange(s, i - s).ToArray()), format.GetRange(s, i - s).ToArray());
+					l.Add(f);
+					s = i + 1;
+				}
+			}else if(privateContent[i] == '\n'){
+				FormatString f = new FormatString();
+				f.Append(new string(privateContent.GetRange(s, i - s).ToArray()), format.GetRange(s, i - s).ToArray());
+				l.Add(f);
+				s = i + 1;
+			}
+		}
+		
+		if(i != s){
+			FormatString f = new FormatString();
+			f.Append(new string(privateContent.GetRange(s, i - s).ToArray()), format.GetRange(s, i - s).ToArray());
+			l.Add(f);
+		}
+		
+		return l.ToArray();
 	}
 	
 	public void DeleteStart(int n){
-		if(n > length){
+		if(n < 0){
 			return;
 		}
+		
+		if(n > length){
+			n = length;
+		}
+		
 		privateContent.RemoveRange(0, n);
 		format.RemoveRange(0, n);
 		flagToBuild = true;
 	}
 	
 	public void DeleteEnd(int n){
-		if(n > length){
+		if(n < 0){
 			return;
+		}
+		
+		if(n > length){
+			n = length;
 		}
 		
 		int l = length;
@@ -601,9 +736,14 @@ public class FormatString{
 	}
 	
 	public void Delete(int si, int n){
-		if(n > length){
+		if(si < 0 || n < 0 || si >= length){
 			return;
 		}
+		
+		if(si + n > length){
+			n = length - si;
+		}
+		
 		privateContent.RemoveRange(si, n);
 		format.RemoveRange(si, n);
 		flagToBuild = true;
@@ -658,10 +798,16 @@ public class FormatString{
 		return c;
 	}
 	
-	public static implicit operator FormatString(string s){
+	public static FormatString operator * (FormatString a, CharFormat? b){
 		FormatString c = new FormatString();
 		
-		c.Append(s);
+		c.Append(a.content, b);
+		
+		return c;
+	}
+	
+	public static implicit operator FormatString(string s){
+		FormatString c = new FormatString(s);
 		
 		return c;
 	}

@@ -43,7 +43,7 @@ public enum ModelInstanceOperation{
 
 public partial class AshFile{
 	public static AshFile operator *(AshFile b, AshFileModel m){
-		AshFile a = AshFile.DeepCopy(b);
+		AshFile a = AshFile.Clone(b);
 		if(m.instances != null){
 			foreach(ModelInstance i in m.instances){
 				switch(i.operation){

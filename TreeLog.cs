@@ -16,7 +16,7 @@ public class TreeLog{ //Used for logging in some format
 		}
 	}
 	
-	public void Reset(){
+	public void Clear(){
 		lock(lockObj){
 			log.Clear();
 			level = 0;

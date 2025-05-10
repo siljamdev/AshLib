@@ -7,6 +7,7 @@ using AshLib.Dates;
 namespace AshLib.AshFiles;
 
 public partial class AshFile{
+	
 	public override string ToString(){
 		StringBuilder sb = new StringBuilder();
 		foreach(KeyValuePair<string, object> kvp in data){
@@ -29,7 +30,8 @@ public partial class AshFile{
 					WriteObjectType(sb, i);
 					b = true;
 				}
-				sb.Append("]; ");
+				sb.Append("];");
+				sb.Append(Environment.NewLine);
 			}else{
 				AshFileType t = GetFileTypeFromType(kvp.Value.GetType());
 				sb.Append(GetTypeIdentifier(t));
@@ -38,7 +40,46 @@ public partial class AshFile{
 					continue;
 				}
 				WriteObjectType(sb, kvp.Value);
-				sb.Append("; ");
+				sb.Append(";");
+				sb.Append(Environment.NewLine);
+			}
+		}
+		
+		return sb.ToString();
+	}
+	
+	public string ToStringCompact(){
+		StringBuilder sb = new StringBuilder();
+		foreach(KeyValuePair<string, object> kvp in data){
+			sb.Append("<");
+			sb.Append(kvp.Key);
+			sb.Append(">:");
+			
+			if(kvp.Value is Array array){
+				AshFileType t = GetFileTypeFromType(array.GetType().GetElementType());
+				if(t == AshFileType.Default){
+					continue;
+				}
+				sb.Append(GetTypeIdentifier(t));
+				sb.Append(":[");
+				bool b = false;
+				foreach(object i in array){
+					if(b){
+						sb.Append(";");
+					}
+					WriteObjectType(sb, i);
+					b = true;
+				}
+				sb.Append("];");
+			}else{
+				AshFileType t = GetFileTypeFromType(kvp.Value.GetType());
+				sb.Append(GetTypeIdentifier(t));
+				sb.Append(":");
+				if(t == AshFileType.Default){
+					continue;
+				}
+				WriteObjectType(sb, kvp.Value);
+				sb.Append(";");
 			}
 		}
 		
@@ -90,8 +131,167 @@ public partial class AshFile{
 				sb.Append(d.seconds);
 				break;
 			default:
-				dynamic y = o;
-				sb.Append(y.ToString());
+				sb.Append(o.ToString());
+				break;
+		}
+	}
+	
+	public string ToJson(){
+		StringBuilder sb = new StringBuilder();
+		sb.Append("{");
+		sb.Append(Environment.NewLine);
+		
+		bool b2 = true;
+		
+		foreach(KeyValuePair<string, object> kvp in data){
+			if(b2){
+				b2 = false;
+			}else{
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+			}
+			sb.Append("\t\"");
+			sb.Append(kvp.Key.Replace("\\", "\\\\").Replace("\"", "\\\""));
+			sb.Append("\": ");
+			
+			if(kvp.Value is Array array){
+				AshFileType t = GetFileTypeFromType(array.GetType().GetElementType());
+				if(t == AshFileType.Default){
+					sb.Append("null,");
+					sb.Append(Environment.NewLine);
+					continue;
+				}
+				sb.Append("[");
+				bool b = false;
+				foreach(object i in array){
+					if(b){
+						sb.Append(", ");
+					}
+					WriteObjectTypeJson(sb, i);
+					b = true;
+				}
+				sb.Append("]");
+			}else{
+				AshFileType t = GetFileTypeFromType(kvp.Value.GetType());
+				if(t == AshFileType.Default){
+					sb.Append("null,");
+					sb.Append(Environment.NewLine);
+					continue;
+				}
+				WriteObjectTypeJson(sb, kvp.Value);
+			}
+		}
+		
+		sb.Append(Environment.NewLine);
+		sb.Append("}");
+		
+		return sb.ToString();
+	}
+	
+	private static void WriteObjectTypeJson(StringBuilder sb, object o){
+		switch(o){
+			case string s:
+				sb.Append("\"");
+				sb.Append(s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\n").Replace("\r\n", "\\n").Replace("\t", "\\t"));
+				sb.Append("\"");
+				break;
+			case Vec2 v2:
+				sb.Append("{");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"x\": ");
+				sb.Append(v2.X);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"y\": ");
+				sb.Append(v2.Y);
+				sb.Append(Environment.NewLine);
+				sb.Append("\t}");
+				break;
+			case Vec3 v3:
+				sb.Append("{");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"x\": ");
+				sb.Append(v3.X);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"y\": ");
+				sb.Append(v3.Y);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"z\": ");
+				sb.Append(v3.Z);
+				sb.Append(Environment.NewLine);
+				sb.Append("\t}");
+				break;
+			case Vec4 v4:
+				sb.Append("{");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"x\": ");
+				sb.Append(v4.X);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"y\": ");
+				sb.Append(v4.Y);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"z\": ");
+				sb.Append(v4.Z);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"w\": ");
+				sb.Append(v4.W);
+				sb.Append(Environment.NewLine);
+				sb.Append("\t}");
+				break;
+			case Color3 col:
+				sb.Append("{");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"r\": ");
+				sb.Append(col.R);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"g\": ");
+				sb.Append(col.G);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"b\": ");
+				sb.Append(col.B);
+				sb.Append(Environment.NewLine);
+				sb.Append("\t}");
+				break;
+			case bool b:
+				sb.Append(b ? "true" : "false");
+				break;
+			case Date d:
+				sb.Append("{");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"day\": ");
+				sb.Append(d.days);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"month\": ");
+				sb.Append(d.months);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"year\": ");
+				sb.Append(d.years);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"hour\": ");
+				sb.Append(d.hours);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"minute\": ");
+				sb.Append(d.minutes);
+				sb.Append(",");
+				sb.Append(Environment.NewLine);
+				sb.Append("\t\t\"second\": ");
+				sb.Append(d.seconds);
+				sb.Append(Environment.NewLine);
+				sb.Append("\t}");
+				break;
+			default:
+				sb.Append(o.ToString());
 				break;
 		}
 	}

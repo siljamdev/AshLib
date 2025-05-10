@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using AshLib.Formatting;
 
 namespace AshLib.Trees;
 
@@ -261,6 +262,16 @@ public class TreeNode<T>{
 		return n;
 	}
 	
+	public TreeNode<T2> Clone<T2>(Func<TreeNode<T>, TreeNode<T2>> f){
+		TreeNode<T2> n = f.Invoke(this);
+		
+		foreach(TreeNode<T> c in children){
+			n.AddChild(c.Clone(f));
+		}
+		
+		return n;
+	}
+	
 	public string ToStringFormat(){
 		StringBuilder sb = new StringBuilder();
 		
@@ -503,7 +514,7 @@ public class TreeNode<T>{
 		return ToStringHelper(this, 0);
 	}
 	
-	private string ToStringHelper(TreeNode<T> n, int level){
+	private static string ToStringHelper(TreeNode<T> n, int level){
 		string indent = "";
 		if(level > 0){
 			indent = string.Concat(Enumerable.Repeat("│  ", level - 1));
@@ -512,7 +523,25 @@ public class TreeNode<T>{
 		//string indent = new string(' ', level * 2);
 		StringBuilder sb = new StringBuilder();
 		sb.Append(indent);
-		sb.Append(n.value);
+		
+		string val2 = n.value.ToString();
+		string[] lines = val2.Split(new string[]{"\r\n", "\n", "\r"}, StringSplitOptions.None);
+		
+		if(lines.Length > 0){
+			bool b = true;
+			string t = string.Concat(Enumerable.Repeat("│  ", level));
+			foreach(string str in lines){
+				if(b){
+					b = false;
+				}else{
+					sb.Append(Environment.NewLine);
+					sb.Append(t);
+				}
+				sb.Append(str);
+			}
+		}else{
+			sb.Append(val2);
+		}
 		
 		foreach(TreeNode<T> c in n.children){
 			sb.Append(Environment.NewLine);
@@ -520,5 +549,65 @@ public class TreeNode<T>{
 		}
 		
 		return sb.ToString();
+	}
+	
+	public FormatString ToFormattedString(CharFormat? lines, CharFormat? val){
+		return ToFormattedStringHelper(this, 0, lines, val);
+	}
+	
+	private static FormatString ToFormattedStringHelper(TreeNode<T> n, int level, CharFormat? lines, CharFormat? v){
+		string indent = "";
+		if(level > 0){
+			indent = string.Concat(Enumerable.Repeat("│  ", level - 1));
+			indent += "├──";
+		}
+		//string indent = new string(' ', level * 2);
+		FormatString fs = new FormatString();
+		fs.Append(indent, lines);
+		
+		if(n.value is FormatString nfs){
+			FormatString[] liness = nfs.SplitIntoLines();
+			if(liness.Length > 0){
+				bool b = true;
+				FormatString t = new FormatString(string.Concat(Enumerable.Repeat("│  ", level)), lines);
+				foreach(FormatString str in liness){
+					if(b){
+						b = false;
+					}else{
+						fs.Append(Environment.NewLine);
+						fs.Append(t);
+					}
+					fs.Append(str);
+				}
+			}else{
+				fs.Append(nfs);
+			}
+		}else{
+			string val2 = n.value.ToString();
+			string[] liness = val2.Split(new string[]{"\r\n", "\n", "\r"}, StringSplitOptions.None);
+			
+			if(liness.Length > 0){
+				bool b = true;
+				FormatString t = new FormatString(string.Concat(Enumerable.Repeat("│  ", level)), lines);
+				foreach(string str in liness){
+					if(b){
+						b = false;
+					}else{
+						fs.Append(Environment.NewLine);
+						fs.Append(t);
+					}
+					fs.Append(str, v);
+				}
+			}else{
+				fs.Append(val2, v);
+			}
+		}
+		
+		foreach(TreeNode<T> c in n.children){
+			fs.Append(Environment.NewLine);
+			fs.Append(ToFormattedStringHelper(c, level + 1, lines, v));
+		}
+		
+		return fs;
 	}
 }

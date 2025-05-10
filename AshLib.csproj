@@ -1,19 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- <OutputType>Exe</OutputType> -->
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	
 	<PackageId>AshLib</PackageId>
-    <Version>3.2.3</Version>
+    <Version>3.3.0</Version>
+	<PackageVersion>3.3.0</PackageVersion>
     <Authors>siljam</Authors>
     <Company>AshProject</Company>
+	
+	<PackageTags>ashfile json tree log deltatime fps console format ansi NO_COLOR</PackageTags>
 	<PackageDescription>Some utilities</PackageDescription>
+	<PackageReleaseNotes>3.3 fixed errors and added formatting</PackageReleaseNotes>
+	
     <RepositoryUrl>https://github.com/siljamdev/AshLib</RepositoryUrl>
-  </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win-x86' Or '$(RuntimeIdentifier)' == 'win-arm64'">
-    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+	<PackageProjectUrl>https://github.com/siljamdev/AshLib</PackageProjectUrl>
   </PropertyGroup>
   
   <ItemGroup>

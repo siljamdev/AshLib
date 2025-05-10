@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 
 namespace AshLib.AshFiles;
 
-public partial class AshFile
+public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 {
 	public Dictionary<string, object> data {get; private set;}
 	public string? path;
@@ -25,7 +25,7 @@ public partial class AshFile
 		}
 	}
 	
-	private const int currentVersion = 3;
+	public const int currentVersion = 3;
 	
 	private static string conversionErrorLog;
 	private static ulong conversionErrorCount;
@@ -64,39 +64,15 @@ public partial class AshFile
 		this.maskStrings = conf.maskStrings;
 	}
 	
-	public string Visualize(){
-		StringBuilder s = new StringBuilder();
-		bool f = false;
-		foreach(KeyValuePair<string, object> kvp in this.data){
-			if(kvp.Value is Array a){
-				if(f){
-					s.Append("\n");
-				}
-				string tab = new string(' ', kvp.Key.Length + 2);
-				s.Append(kvp.Key);
-				s.Append(": ");
-				
-				bool b = false;
-				
-				foreach(object o in a){
-					if(b){
-						s.Append("\n");
-						s.Append(tab);
-					}
-					s.Append(o.ToString());
-					b = true;
-				}
-			}else{
-				if(f){
-					s.Append("\n");
-				}
-				s.Append(kvp.Key);
-				s.Append(": ");
-				s.Append(kvp.Value.ToString());
-			}
-			f = true;
+	public IEnumerator<KeyValuePair<string, object>> GetEnumerator(){
+		foreach(KeyValuePair<string, object> kvp in data){
+			yield return kvp;
 		}
-		return s.ToString();
+	}
+	
+	//IEnumerable method
+	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator(){
+		return GetEnumerator();
 	}
 	
 	public void Clear(){
@@ -232,7 +208,11 @@ public partial class AshFile
 	
 	//OPERATOR THINGS
 	
-	public static AshFile DeepCopy(AshFile a){
+	public AshFile Clone(){
+		return Clone(this);
+	}
+	
+	public static AshFile Clone(AshFile a){
 		AshFile o = new AshFile();
 		
 		if(a.path != null){
@@ -270,7 +250,7 @@ public partial class AshFile
 	}
 	
 	public static AshFile operator +(AshFile a1, AshFile a2){
-		AshFile o = DeepCopy(a1);
+		AshFile o = Clone(a1);
 		
 		foreach(KeyValuePair<string, object> kvp in a2.data){
             if(o.data.TryGetValue(kvp.Key, out object v1)){
