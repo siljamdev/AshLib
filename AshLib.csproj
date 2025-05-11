@@ -7,21 +7,24 @@
     <Nullable>enable</Nullable>
 	
 	<PackageId>AshLib</PackageId>
-    <Version>3.3.0</Version>
-	<PackageVersion>3.3.0</PackageVersion>
+    <Version>3.3.1</Version>
+	<PackageVersion>3.3.1</PackageVersion>
     <Authors>siljam</Authors>
     <Company>AshProject</Company>
 	
 	<PackageTags>ashfile json tree log deltatime fps console format ansi NO_COLOR</PackageTags>
-	<PackageDescription>Some utilities</PackageDescription>
-	<PackageReleaseNotes>3.3 fixed errors and added formatting</PackageReleaseNotes>
+	<PackageDescription>AshFiles, FormatStrings, DeltaHelpers &amp; more!</PackageDescription>
+	<PackageReleaseNotes>3.3.1 added icon</PackageReleaseNotes>
 	
     <RepositoryUrl>https://github.com/siljamdev/AshLib</RepositoryUrl>
 	<PackageProjectUrl>https://github.com/siljamdev/AshLib</PackageProjectUrl>
+	
+	<PackageIcon>res\icon.png</PackageIcon>
   </PropertyGroup>
   
   <ItemGroup>
 	<Compile Remove="documentation/**" />
+	<None Include="res\icon.png" Pack="true" PackagePath="res/" />
   </ItemGroup>
 
 </Project>
