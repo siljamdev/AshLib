@@ -81,7 +81,7 @@ public partial class AshFile{
 			return output;
 		}
 		
-		public static byte[] Write(Dictionary<string, object> dictionary){
+		public static byte[] Write(IDictionary<string, object> dictionary){
 			List<byte> output = new List<byte>(); //Final output
 			
 			List<KeyValuePair<string, object>> dictionaryList = dictionary.ToList(); //Transform it to a list so it can be easily iterated through

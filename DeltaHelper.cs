@@ -43,11 +43,20 @@ public class DeltaHelper{ //Class used for helping with deltatime, fps and those
 	}
 	
 	public void Target(double FPS){ //Call with argument at the end of each frame(just before Frame()) to achieve wanted fps target
-		double wantedDeltaTime = 1000d/(double)FPS; //In ms
+		double wantedDeltaTime = 1000d/FPS; //In ms
 		double realDeltaTime = (timer.Elapsed.TotalMilliseconds - lastTime); //In ms
 		double extraTime = wantedDeltaTime - realDeltaTime;
 		if(extraTime > 0){
 			PreciseWait(extraTime); //Sleeps for needed time
+		}
+	}
+	
+	public void TargetLazy(double FPS){ //Call with argument at the end of each frame(just before Frame()) to achieve wanted fps target
+		double wantedDeltaTime = 1000d/FPS; //In ms
+		double realDeltaTime = (timer.Elapsed.TotalMilliseconds - lastTime); //In ms
+		double extraTime = wantedDeltaTime - realDeltaTime;
+		if(extraTime > 0){
+			LazyWait(extraTime); //Sleeps for needed time or maybe more.
 		}
 	}
 	
@@ -62,5 +71,9 @@ public class DeltaHelper{ //Class used for helping with deltatime, fps and those
 	private void PreciseWait(double milliseconds){  //Will busy wait, wich has a high CPU usage but its impossible to achieve precision otherwise
         double start = timer.Elapsed.TotalMilliseconds;
 		while(timer.Elapsed.TotalMilliseconds < start + milliseconds){}
+    }
+	
+	private void LazyWait(double milliseconds){  //Will busy wait, wich has a high CPU usage but its impossible to achieve precision otherwise
+        Thread.Sleep((int) milliseconds);
     }
 }

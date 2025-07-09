@@ -10,7 +10,7 @@ For a more practical explanation in the form of examples, you can visit the [Exa
 For a reference on everything, you can visit the [Reference Documentation](./documentation/AshLibReferenceDocumentation.pdf)  
 
 ## AshFile
-An AshFile is a data structure composed of camps. Each camp has a name and a value. This value can be of different types(numbers, text...)  
+An AshFile is a data structure composed of camps. Each camp has a key and a value. This value can be of different types(numbers, text...)  
 It also is a file format, with the extension **.ash**. It is very easy to save and load an AshFile from a file, making it a reliable and easy way to use it in programming projects and then store it  
 You can also use Models to ensure the camps are in the expected format  
 Additionally, you can transform them to JSON and visualize them in many ways  

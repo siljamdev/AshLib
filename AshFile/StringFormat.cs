@@ -10,13 +10,13 @@ public partial class AshFile{
 	
 	public override string ToString(){
 		StringBuilder sb = new StringBuilder();
-		foreach(KeyValuePair<string, object> kvp in data){
+		foreach(KeyValuePair<string, object> kvp in this){
 			sb.Append("<");
 			sb.Append(kvp.Key);
 			sb.Append(">:");
 			
-			if(kvp.Value is Array array){
-				AshFileType t = GetFileTypeFromType(array.GetType().GetElementType());
+			if(kvp.Value is IEnumerable array && kvp.Value is not string){
+				AshFileType t = GetFileTypeFromType(GetBaseTypeOfEnumerable(array));
 				if(t == AshFileType.Default){
 					continue;
 				}
@@ -50,13 +50,13 @@ public partial class AshFile{
 	
 	public string ToStringCompact(){
 		StringBuilder sb = new StringBuilder();
-		foreach(KeyValuePair<string, object> kvp in data){
+		foreach(KeyValuePair<string, object> kvp in this){
 			sb.Append("<");
 			sb.Append(kvp.Key);
 			sb.Append(">:");
 			
-			if(kvp.Value is Array array){
-				AshFileType t = GetFileTypeFromType(array.GetType().GetElementType());
+			if(kvp.Value is IEnumerable array && kvp.Value is not string){
+				AshFileType t = GetFileTypeFromType(GetBaseTypeOfEnumerable(array));
 				if(t == AshFileType.Default){
 					continue;
 				}
@@ -143,7 +143,7 @@ public partial class AshFile{
 		
 		bool b2 = true;
 		
-		foreach(KeyValuePair<string, object> kvp in data){
+		foreach(KeyValuePair<string, object> kvp in this){
 			if(b2){
 				b2 = false;
 			}else{
@@ -154,8 +154,8 @@ public partial class AshFile{
 			sb.Append(kvp.Key.Replace("\\", "\\\\").Replace("\"", "\\\""));
 			sb.Append("\": ");
 			
-			if(kvp.Value is Array array){
-				AshFileType t = GetFileTypeFromType(array.GetType().GetElementType());
+			if(kvp.Value is IEnumerable array && kvp.Value is not string){
+				AshFileType t = GetFileTypeFromType(GetBaseTypeOfEnumerable(array));
 				if(t == AshFileType.Default){
 					sb.Append("null,");
 					sb.Append(Environment.NewLine);
@@ -343,29 +343,6 @@ public partial class AshFile{
 		}
 	}
 	
-	private static Type GetTypeFromEnum(AshFileType fileType){
-		switch (fileType){
-			case AshFileType.String: return typeof(string);
-			case AshFileType.Byte: return typeof(byte);
-			case AshFileType.Ushort: return typeof(ushort);
-			case AshFileType.Uint: return typeof(uint);
-			case AshFileType.Ulong: return typeof(ulong);
-			case AshFileType.Sbyte: return typeof(sbyte);
-			case AshFileType.Short: return typeof(short);
-			case AshFileType.Int: return typeof(int);
-			case AshFileType.Long: return typeof(long);
-			case AshFileType.Color3: return typeof(Color3); // Example for Color3 (need a proper type here)
-			case AshFileType.Float: return typeof(float);
-			case AshFileType.Double: return typeof(double);
-			case AshFileType.Vec2: return typeof(Vec2); // Example for Vec2
-			case AshFileType.Vec3: return typeof(Vec3); // Example for Vec3
-			case AshFileType.Vec4: return typeof(Vec4); // Example for Vec4
-			case AshFileType.Bool: return typeof(bool);
-			case AshFileType.Date: return typeof(Date);
-			default: return typeof(object); // Default case if no matching type
-		}
-	}
-	
 	public static bool TryParse(string s, out AshFile a){
 		try{
 			a = Parse(s);
@@ -378,6 +355,10 @@ public partial class AshFile{
 	}
 	
 	public static AshFile Parse(string s){
+		if(s == null){
+			throw new AshFileException("Cant parse null string", 13);
+		}
+		
 		int index = 0;
 		AshFile af = new AshFile();
 		while(index < s.Length){
@@ -432,15 +413,15 @@ public partial class AshFile{
 					list.CopyTo(array, 0);
 					
 					dynamic a = array;
-					if(!af.ExistsCamp(name)){
-						af.SetCamp(name, a);
+					if(!af.ContainsKey(name)){
+						af.Set(name, a);
 					}
 					ParseWhite(s, ref index);
 					ParseSemiColon(s, ref index);
 				}else{
 					object o = ParseValue(s, ref index, t, false);
-					if(o != null && !af.ExistsCamp(name)){
-						af.SetCamp(name, o);
+					if(o != null && !af.ContainsKey(name)){
+						af.Set(name, o);
 					}
 					ParseWhite(s, ref index);
 					ParseSemiColon(s, ref index);
@@ -912,5 +893,25 @@ public partial class AshFile{
 		while(index < s.Length && char.IsWhiteSpace(s[index])){
 			index++;
 		}
+	}
+	
+	private static Type GetBaseTypeOfEnumerable(IEnumerable enumerable){
+		if(enumerable == null){
+			return null;
+		}
+		
+		var genericEnumerableInterface = enumerable
+			.GetType()
+			.GetInterfaces()
+			.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+		
+		if(genericEnumerableInterface == null){
+			return null;
+		}
+		
+		var elementType = genericEnumerableInterface.GetGenericArguments()[0];
+		return elementType.IsGenericType && elementType.GetGenericTypeDefinition() == typeof(Nullable<>)
+			? elementType.GetGenericArguments()[0]
+			: elementType;
 	}
 }

@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Text;
+using System.Collections;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
 namespace AshLib.AshFiles;
 
-public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
+public partial class AshFile : IDictionary<string, object>, ICloneable, IEquatable<AshFile>
 {
-	public Dictionary<string, object> data {get; private set;}
+	Dictionary<string, object> data; //internal dict
 	public string? path;
 	public byte format;
 	
@@ -15,13 +16,25 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 	public bool maskCampNames = true;
 	public bool maskStrings = true;
 	
-	public AshFileFormatConfig formatConfig{get{
+	public AshFileFormatConfig FormatConfig{get{
 		return new AshFileFormatConfig(compactBools, maskCampNames, maskStrings);
 	}}
 	
-	public int numberOfcamps{
+	public int Count{
 		get{
 			return data.Count;
+		}
+	}
+	
+	public bool IsReadOnly{
+		get{
+			return false;
+		}
+	}
+	
+	public bool IsFixedSize{
+		get{
+			return false;
 		}
 	}
 	
@@ -32,28 +45,48 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 	
 	//Constructors
 	
-	public AshFile(Dictionary<string, object> d){
-		this.data = d;
+	public AshFile(){
+		this.data = new Dictionary<string, object>();
+		this.format = currentVersion;
+	}
+	
+	public AshFile(AshFile a) : this(){
+		if(a.path != null){
+			this.path = new string(a.path);
+		}
+		
+		if(a.format != null){
+			this.format = a.format;
+		}
+		
+		this.ImportFormatConfig(a.FormatConfig);
+		
+		if(a.data != null){
+			foreach(KeyValuePair<string, object> kvp in a){
+				if(kvp.Value is ICloneable cloneable){
+					this.data.Add(new string(kvp.Key), cloneable.Clone());
+				}else{
+					this.data.Add(new string(kvp.Key), kvp.Value);
+				}
+			}
+		}
+	}
+	
+	public AshFile(IDictionary<string, object> d){
+		this.data = new Dictionary<string, object>(d);
 		this.format = currentVersion;
 	}
 	
 	public AshFile(string path){
 		this.path = path;
 		if(!File.Exists(path)){
-			if(!Directory.Exists(Path.GetDirectoryName(path))){
-				Directory.CreateDirectory(Path.GetDirectoryName(path));
-			}
-			FileStream f = File.Create(path);
-			f.Close();
+			this.data = new Dictionary<string, object>();
+			this.format = currentVersion;
+		}else{
+			this.data = ReadFromFile(path, out byte fo, out AshFileFormatConfig conf);
+			this.format = fo;
+			this.ImportFormatConfig(conf);
 		}
-		data = ReadFromFile(path, out byte fo, out AshFileFormatConfig conf);
-		this.format = fo;
-		this.ImportFormatConfig(conf);
-	}
-	
-	public AshFile(){
-		this.data = new Dictionary<string, object>();
-		this.format = currentVersion;
 	}
 	
 	//Other stuff
@@ -65,18 +98,12 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 	}
 	
 	public IEnumerator<KeyValuePair<string, object>> GetEnumerator(){
-		foreach(KeyValuePair<string, object> kvp in data){
-			yield return kvp;
-		}
+		return data.GetEnumerator();
 	}
 	
 	//IEnumerable method
 	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator(){
 		return GetEnumerator();
-	}
-	
-	public void Clear(){
-		this.data.Clear();
 	}
 	
 	//================
@@ -99,14 +126,14 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 	
 	public void Save(string path){
 		this.path = path;
-		WriteToFile(path, data, this.format, this.formatConfig);
+		WriteToFile(path, data, this.format, this.FormatConfig);
 	}
 	
 	public void Save(){
 		if(path == null){
 			throw new AshFileException("Path has not been initialized", 1);
 		}
-		WriteToFile(path, data, this.format, this.formatConfig);
+		WriteToFile(path, data, this.format, this.FormatConfig);
 	}
 	
 
@@ -125,7 +152,7 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 	}
 	
 	public static Dictionary<string, object> ReadFromBytes(byte[] fileBytes, out byte f, out AshFileFormatConfig conf){
-		if (fileBytes.Length == 0){
+		if(fileBytes.Length == 0){
 			f = currentVersion;
 			conf = AshFileFormatConfig.Default;
 			return new Dictionary<string, object>();
@@ -151,6 +178,16 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 		}
 	}
 	
+	public static AshFile ReadFromBytes(byte[] fileBytes){
+		Dictionary<string, object> d = ReadFromBytes(fileBytes, out byte f, out AshFileFormatConfig conf);
+		
+		AshFile a = new AshFile(d);
+		a.format = f;
+		a.ImportFormatConfig(conf);
+		
+		return a;
+	}
+	
 	public static void WriteToFile(string path, Dictionary<string, object> dictionary, byte format, AshFileFormatConfig conf){
 		try{
 			File.WriteAllBytes(path, WriteToBytes(dictionary, format, conf));
@@ -173,7 +210,7 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 	}
 	
 	public byte[] WriteToBytes(){
-		return WriteToBytes(this.data, this.format, this.formatConfig);
+		return WriteToBytes(this.data, this.format, this.FormatConfig);
 	}
 	
 	//ERROR HANDLING
@@ -183,7 +220,7 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 			conversionErrorCount++;
 			conversionErrorLog += message + "\n";
 			conversionErrorLog += a.GetFullMessage();
-		} else{
+		}else{
 			conversionErrorCount++;
 			conversionErrorLog += message + "\n";
 			conversionErrorLog += "Message: " + e.Message + "\n";
@@ -208,7 +245,8 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 	
 	//OPERATOR THINGS
 	
-	public AshFile Clone(){
+	//Iclonable
+	public object Clone(){
 		return Clone(this);
 	}
 	
@@ -223,8 +261,9 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 			o.format = a.format;
 		}
 		
+		o.ImportFormatConfig(a.FormatConfig);
+		
 		if(a.data != null){
-			o.data = new Dictionary<string, object>();
 			foreach(KeyValuePair<string, object> kvp in a.data){
 				if (kvp.Value is ICloneable cloneable){
 					o.data.Add(new string(kvp.Key), cloneable.Clone());
@@ -238,29 +277,21 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 	}
 	
 	public static AshFile Merge(AshFile a1, AshFile a2){
-		return a1 + a2;
-	}
-	
-	public static explicit operator Dictionary<string, object>(AshFile af){
-		return af.data;
-	}
-	
-	public static implicit operator AshFile(Dictionary<string, object> d){
-		return new AshFile(d);
-	}
-	
-	public static AshFile operator +(AshFile a1, AshFile a2){
 		AshFile o = Clone(a1);
 		
-		foreach(KeyValuePair<string, object> kvp in a2.data){
-            if(o.data.TryGetValue(kvp.Key, out object v1)){
-				o.data[kvp.Key] = kvp.Value;
-			}else{
-				o.data.Add(kvp.Key, kvp.Value);
-			}
+		foreach(KeyValuePair<string, object> kvp in a2){
+			o[kvp.Key] = kvp.Value;
         }
 		
 		return o;
+	}
+	
+	public static AshFile operator +(AshFile a1, AshFile a2){
+		return Merge(a1, a2);
+	}
+	
+	public static explicit operator AshFile(Dictionary<string, object> d){
+		return new AshFile(d);
 	}
 	
 	public static bool operator ==(AshFile a1, AshFile a2){
@@ -268,10 +299,10 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 		if(a1 is null && a2 is null) return true;
 		if(a1 is null || a2 is null) return false;
 		
-		if(a1.data.Count != a2.data.Count)return false;
+		if(a1.Count != a2.Count) return false;
 
         // Check each key-value pair in dict1
-        foreach (KeyValuePair<string, object> kvp in a1.data){
+        foreach (KeyValuePair<string, object> kvp in a1){
             // If the key is not present in dict2, or the corresponding value is not equal, return false
             if(!a2.data.TryGetValue(kvp.Key, out object val) || !AreValuesEqual(val, kvp.Value))
                 return false;
@@ -292,6 +323,10 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
             return false;
     }
 	
+	public bool Equals(AshFile? af){
+		return this == af;
+    }
+	
 	private static bool AreValuesEqual(object value1, object value2){
 		// Handle null cases
 		if(value1 == null && value2 == null){
@@ -303,13 +338,15 @@ public partial class AshFile : IEnumerable<KeyValuePair<string, object>>
 		}
 	
 		// If one or both values are arrays, handle them differently
-		if(value1 is Array array1 && value2 is Array array2){
-			if (array1.Length != array2.Length)
+		if(value1 is IEnumerable array1 && value1 is not string && value2 is IEnumerable array2 && value2 is not string){
+			IList<object> a1 = array1.Cast<object>().ToList();
+			IList<object> a2 = array2.Cast<object>().ToList();
+			if(a1.Count != a2.Count)
 				return false;
 	
 			// Compare each element of the arrays
-			for (int i = 0; i < array1.Length; i++){
-				if (!AreValuesEqual(array1.GetValue(i), array2.GetValue(i))){
+			for(int i = 0; i < a1.Count; i++){
+				if(!AreValuesEqual(a1[i], a2[i])){
 					return false;
 				}
 			}

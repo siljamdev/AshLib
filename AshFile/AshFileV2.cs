@@ -588,7 +588,7 @@ public partial class AshFile{
 			return AshFileTypeOld.ByteArray;
 		}
 		
-		public static byte[] Write(Dictionary<string, object> d){
+		public static byte[] Write(IDictionary<string, object> d){
 			List<byte> bytes = new List<byte>();
 			
 			KeyValuePair<string, object>[] dictionary = new KeyValuePair<string, object>[d.Count];

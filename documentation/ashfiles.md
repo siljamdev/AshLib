@@ -2,8 +2,8 @@
 
 An AshFile is a file format that has **.ash extension**, but it also represents a structure of data.  
 This structure is based in multiple pockets of information. These pockets are called **camps**.  
-Each camp has a **name** and a **value**. This value can be many things.  
-For example, you could have a camp named "debt", with its value being a number and being 12000.  
+Each camp has a **key** and a **value**. This value can be many things.  
+For example, you could have a camp with key "debt", with its value being a number and being 12000.  
 
 ## Camp management
 Start by creating an AshFile:

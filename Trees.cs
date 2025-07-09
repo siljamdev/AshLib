@@ -202,7 +202,7 @@ public class TreeNode<T>{
 		return null;
 	}
 	
-	public TreeNode<T>? FindNode(Func<TreeNode<T>, bool> condition){
+	public TreeNode<T>? FindNode(Predicate<TreeNode<T>> condition){
 		if(condition(this)){
 			return this;
 		}
@@ -217,7 +217,7 @@ public class TreeNode<T>{
 		return null;
 	}
 	
-	public TreeNode<T>? FindNode(Func<T, bool> condition){
+	public TreeNode<T>? FindNode(Predicate<T> condition){
 		if(condition(value)){
 			return this;
 		}
@@ -232,7 +232,7 @@ public class TreeNode<T>{
 		return null;
 	}
 	
-	public TreeNode<T>? FindChildNode(Func<TreeNode<T>, bool> condition){		
+	public TreeNode<T>? FindChildNode(Predicate<TreeNode<T>> condition){
 		foreach(TreeNode<T> n in children){
 			if(condition(n)){
 				return n;
@@ -242,7 +242,7 @@ public class TreeNode<T>{
 		return null;
 	}
 	
-	public TreeNode<T>? FindChildNode(Func<T, bool> condition){		
+	public TreeNode<T>? FindChildNode(Predicate<T> condition){
 		foreach(TreeNode<T> n in children){
 			if(condition(n.value)){
 				return n;
@@ -262,7 +262,7 @@ public class TreeNode<T>{
 		return n;
 	}
 	
-	public TreeNode<T2> Clone<T2>(Func<TreeNode<T>, TreeNode<T2>> f){
+	public TreeNode<T2> Clone<T2>(Converter<TreeNode<T>, TreeNode<T2>> f){
 		TreeNode<T2> n = f.Invoke(this);
 		
 		foreach(TreeNode<T> c in children){

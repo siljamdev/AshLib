@@ -7,14 +7,14 @@
     <Nullable>enable</Nullable>
 	
 	<PackageId>AshLib</PackageId>
-    <Version>3.3.1</Version>
-	<PackageVersion>3.3.1</PackageVersion>
+    <Version>3.4.0</Version>
+	<PackageVersion>3.4.0</PackageVersion>
     <Authors>siljam</Authors>
     <Company>AshProject</Company>
 	
 	<PackageTags>ashfile json tree log deltatime fps console format ansi NO_COLOR</PackageTags>
 	<PackageDescription>AshFiles, FormatStrings, DeltaHelpers &amp; more!</PackageDescription>
-	<PackageReleaseNotes>3.3.1 added icon</PackageReleaseNotes>
+	<PackageReleaseNotes>New ReactiveList, AshFile updates</PackageReleaseNotes>
 	
     <RepositoryUrl>https://github.com/siljamdev/AshLib</RepositoryUrl>
 	<PackageProjectUrl>https://github.com/siljamdev/AshLib</PackageProjectUrl>
@@ -24,6 +24,8 @@
   
   <ItemGroup>
 	<Compile Remove="documentation/**" />
+	<Compile Remove="tests/**" />
+	<Compile Remove="Program.cs" />
 	<None Include="res\icon.png" Pack="true" PackagePath="res/" />
   </ItemGroup>
 

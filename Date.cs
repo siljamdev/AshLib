@@ -79,8 +79,7 @@ public struct Date{ //Represents a time between the year 1488 and 2511, down to 
         return base64.Substring(0, 6);
     }
 	
-	public static Date FromCPTF(string cptf) //Stands for Compressed printable date format. Format to represent dates in 6 base64 charachters. 
-	{
+	public static Date FromCPTF(string cptf){ //Stands for Compressed printable date format. Format to represent dates in 6 base64 charachters. 
 		// Pad the base64 string to ensure it can be decoded properly
 		cptf += "A";
 		cptf = cptf.PadRight(8, '=');
@@ -137,7 +136,7 @@ public struct Date{ //Represents a time between the year 1488 and 2511, down to 
     }
 	
 	public override string ToString(){
-		return days + "/" + months + "/" + years + " " + hours + ":" + minutes + ":" + seconds;
+		return days.ToString("D2") + "/" + months.ToString("D2") + "/" + years + " " + hours.ToString("D2") + ":" + minutes.ToString("D2") + ":" + seconds.ToString("D2");
 	}
 	
 }

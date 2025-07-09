@@ -29,6 +29,10 @@ public struct Color3{ //Just for holding the data of a RGB color
 	}
 	
 	public static Color3 Parse(string hex){
+		if(hex == null){
+			throw new ArgumentNullException(nameof(hex));
+		}
+		
 		if(hex.StartsWith("#")){
             hex = hex.Substring(1);
         }
@@ -38,13 +42,18 @@ public struct Color3{ //Just for holding the data of a RGB color
         }
 		
 		byte r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
-        byte g = byte.Parse(hex.Substring(2, 2).Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
-        byte b = byte.Parse(hex.Substring(4, 2).Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+        byte g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+        byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
 		
 		return new Color3(r, g, b);
 	}
 	
 	public static bool TryParse(string hex, out Color3 col){
+		if(hex == null){
+			col = new Color3(0, 0, 0);
+            return false;
+		}
+		
 		if(hex.StartsWith("#")){
             hex = hex.Substring(1);
         }
@@ -67,6 +76,56 @@ public struct Color3{ //Just for holding the data of a RGB color
 		}
 	}
 	
+	public Vec3 ToVec(){
+		return new Vec3(this.R / 255f, this.G / 255f, this.B / 255f);
+	}
+	
+	public static Color3 FromVec(Vec3 v){
+		return new Color3((byte) (Math.Clamp(v.X, 0f, 1f) * 255f), (byte) (Math.Clamp(v.Y, 0f, 1f) * 255f), (byte) (Math.Clamp(v.Z, 0f, 1f) * 255f));
+	}
+	
+	public static Color3 FromHSV(int h, int s, int v){
+		h = Math.Clamp(h, 0, 360);
+		s = Math.Clamp(s, 0, 100);
+		v = Math.Clamp(v, 0, 100);
+		if(s == 0){
+			byte rgb = (byte) (v * 255f / 100f);
+			return new Color3(rgb, rgb, rgb);
+		}
+		if(h == 360){
+			h = 0;
+		}
+		float f = h / 360f * 6f;
+		int i = (int) f;
+		f -= i;
+		
+		byte w = (byte) (255f * v / 100f * (1f - s / 100f));
+		byte q = (byte) (255f * v / 100f * (1f - s / 100f * f));
+		byte t = (byte) (255f * v / 100f * (1f - s / 100f * (1f - f)));
+		
+		switch(i){
+			case 0:
+			return new Color3((byte) (v * 255f / 100f), t, w);
+			
+			case 1:
+			return new Color3(q, (byte) (v * 255f / 100f), w);
+			
+			case 2:
+			return new Color3(w, (byte) (v * 255f / 100f), t);
+			
+			case 3:
+			return new Color3(w, q, (byte) (v * 255f / 100f));
+			
+			case 4:
+			return new Color3(t, w, (byte) (v * 255f / 100f));
+			
+			case 5:
+			return new Color3((byte) (v * 255f / 100f), w, q);
+		}
+		
+		return new Color3(0, 0, 0);
+	}
+	
 	public static implicit operator System.Drawing.Color(Color3 col){ //Can cast from and to the System.Drawing
 		return System.Drawing.Color.FromArgb(col.R, col.G, col.B);
 	}
@@ -86,8 +145,7 @@ public struct Color3{ //Just for holding the data of a RGB color
 		return !(a == b);
 	}
 	
-	public override bool Equals(object obj)
-    {
+	public override bool Equals(object obj){
         if (obj is Color3 other)
             return this == other;
         else

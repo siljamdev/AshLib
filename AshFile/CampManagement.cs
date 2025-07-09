@@ -1,76 +1,117 @@
 using System;
-using AshLib.Dates;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace AshLib.AshFiles;
 
 public partial class AshFile{
-	
-	public bool ExistsCamp(string name){
-		if(this.data.ContainsKey(name)){
-			return true;
+	public object this[string key]{
+		get{
+			return GetValue(key);
 		}
-		return false;
+		set{
+			Set(key, value);
+		}
+	}
+	
+	ICollection<string> IDictionary<string, object>.Keys {
+		get{
+			return ((IDictionary<string, object>) this.data).Keys;
+		}
+	}
+	
+	public ICollection<string> Keys {
+		get{
+			return this.data.Keys;
+		}
+	}
+	
+	ICollection<object> IDictionary<string, object>.Values {
+		get{
+			return ((IDictionary<string, object>) this.data).Values;
+		}
+	}
+	
+	public ICollection<object> Values {
+		get{
+			return this.data.Values;
+		}
+	}
+	
+	public void Clear(){
+		this.data.Clear();
+	}
+	
+	public bool Contains(KeyValuePair<string, object> kvp){
+		return this.data.Contains(kvp);
+	}
+	
+	public bool ContainsKey(string key){
+		return this.data.ContainsKey(key);
 	}
 	
 	//Set
 	
-	public void SetCamp(string name, object val){
-		this.data[name] = val;
+	public void Set(string key, object val){
+		this.data[key] = val;
+	}
+	
+	public void Add(KeyValuePair<string, object> kvp){
+		Set(kvp.Key, kvp.Value);
+	}
+	
+	public void Add(string k, object v){
+		Set(k, v);
 	}
 
 	//Initialize
 	
-	public void InitializeCamp(string name, object val){
-		if(this.ExistsCamp(name)){
+	public void Initialize(string key, object val){
+		if(this.ContainsKey(key)){
 			return;
 		}
-		this.SetCamp(name, val);
+		this.Set(key, val);
 	}
 
 	//Get
 	
-	public object GetCamp(string name){
-		if(!this.ExistsCamp(name)){
+	public object GetValue(string key){
+		if(!this.ContainsKey(key)){
 			return null;
 		}
-		return this.data[name];
+		return this.data[key];
 	}
 	
-	public bool CanGetCamp(string name, out object val){
-		if(!this.ExistsCamp(name)){
-			val = null;
-			return false;
-		}
-		val = this.data[name];
-		return true;
-	}
-	
-	public T GetCamp<T>(string name){
-		if(!this.ExistsCamp(name)){
+	public T GetValue<T>(string key){
+		if(!this.ContainsKey(key)){
 			return default(T);
 		}
-		if(this.data[name] is T val){
+		if(this.data[key] is T val){
 			return val;
 		}
 		return default(T);
 	}
 	
-	public T GetCampOrDefault<T>(string name, T def){
-		if(!this.ExistsCamp(name)){
+	public T GetOrDefault<T>(string key, T def){
+		if(!this.ContainsKey(key)){
 			return def;
 		}
-		if(this.data[name] is T val){
+		if(this.data[key] is T val){
 			return val;
 		}
 		return def;
 	}
 	
-	public bool CanGetCamp<T>(string name, out T val){
-		if(!this.ExistsCamp(name)){
+	public bool TryGetValue(string key, out object value){
+		return this.data.TryGetValue(key, out value);
+	}
+	
+	public bool TryGetValue<T>(string key, out T val){
+		if(!this.ContainsKey(key)){
 			val = default(T);
 			return false;
 		}
-		if(this.data[name] is T v){
+		if(this.data[key] is T v){
 			val = v;
 			return true;
 		}
@@ -80,57 +121,64 @@ public partial class AshFile{
 	
 	//get type
 	
-	public Type GetCampType(string name){
-		if(!this.ExistsCamp(name)){
+	public Type GetValueType(string key){
+		if(!this.ContainsKey(key)){
 			return null;
 		}
-		return this.data[name].GetType();
+		return this.data[key].GetType();
 	}
 	
-	public bool CanGetCampType(string name, out Type t){
-		if(!this.ExistsCamp(name)){
+	public bool TryGetValueType(string key, out Type t){
+		if(!this.ContainsKey(key)){
 			t = null;
 			return false;
 		}
-		t = this.data[name].GetType();
+		t = this.data[key].GetType();
 		return true;
 	}
 	
-	//delete
+	//Remove
 	
-	public void DeleteCamp(string name){
-		if(!ExistsCamp(name)){
-			return;
+	public bool Remove(KeyValuePair<string, object> kvp){
+		foreach(KeyValuePair<string, object> kvp2 in this){
+			if(kvp.Key == kvp2.Key && kvp.Value == kvp2.Value){
+				Remove(kvp.Key);
+				return true;
+			}
 		}
-		this.data.Remove(name);
+		return false;
 	}
 	
-	public bool CanDeleteCamp(string name){
-		if(!this.ExistsCamp(name)){
-			return false;
+	public bool Remove(string key){
+		return this.data.Remove(key);
+	}
+	
+	public int RemoveAll(Predicate<KeyValuePair<string, object>> condition){
+		if(condition == null){
+			return 0;
 		}
-		this.data.Remove(name);
-		return true;
+		int c = 0;
+		foreach(KeyValuePair<string, object> kvp in this){
+			if(condition(kvp) && this.Remove(kvp.Key)){
+				c++;
+			}
+		}
+		return c;
 	}
 	
 	//Rename
 	
-	public void RenameCamp(string oldName, string newName){
-		if(!this.ExistsCamp(oldName)){
-			return;
-		}
-		object o = this.GetCamp(oldName);
-		this.DeleteCamp(oldName);
-		this.SetCamp(newName, o);
-	}
-	
-	public bool CanRenameCamp(string oldName, string newName){
-		if(!this.ExistsCamp(oldName)){
+	public bool Rename(string oldKey, string newKey){
+		if(!this.ContainsKey(oldKey)){
 			return false;
 		}
-		object o = this.GetCamp(oldName);
-		this.DeleteCamp(oldName);
-		this.SetCamp(newName, o);
+		object o = this.GetValue(oldKey);
+		this.Remove(oldKey);
+		this.Set(newKey, o);
 		return true;
+	}
+	
+	public void CopyTo(KeyValuePair<string, object>[] array, int arrayIndex){
+		((ICollection<KeyValuePair<string, object>>)this.data).CopyTo(array, arrayIndex);
 	}
 }

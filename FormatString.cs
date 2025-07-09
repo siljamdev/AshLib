@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -119,7 +120,8 @@ public class CharFormat{
     }
 }
 
-public class FormatString : IEnumerable<(char, CharFormat)>{
+public class FormatString : ICollection<(char, CharFormat?)>, ICloneable, IEquatable<FormatString>
+{
 	
 	//WINDOWS TERMINAL THINGS
 	#region W
@@ -164,9 +166,23 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
 		return _built;
 	}}
 	
-	public int length{get{
-		return privateContent.Count;
-	}}
+	public int Length{
+		get{
+			return privateContent.Count;
+		}
+	}
+	
+	public int Count{
+		get{
+			return privateContent.Count;
+		}
+	}
+	
+	public bool IsReadOnly{
+		get{
+			return false;
+		}
+	}
 	
 	private bool flagToBuild;
 	
@@ -187,6 +203,10 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
 		Append(fs);
 	}
 	
+	public FormatString(ICollection<(char, CharFormat?)> fs) : this(){
+		Append(fs);
+	}
+	
 	public FormatString(string s) : this(){
 		Append(s);
 	}
@@ -196,7 +216,7 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
 	}
 	
 	#region IEnumerator
-	public IEnumerator<(char, CharFormat)> GetEnumerator(){
+	public IEnumerator<(char, CharFormat?)> GetEnumerator(){
 		for(int i = 0; i < privateContent.Count; i++){
 			yield return (privateContent[i], format[i]);
 		}
@@ -220,7 +240,7 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
 		flagToBuild = true;
 	}
 	
-	public FormatString Clone(){
+	public object Clone(){
 		return Clone(this);
 	}
 	
@@ -399,17 +419,15 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
 		flagToBuild = true;
 	}
 	
-	public void Append(string s, CharFormat?[] f){
+	public void Append(string s, IEnumerable<CharFormat?> f){
 		if(string.IsNullOrEmpty(s) || f == null){
 			return;
 		}
-		if(s.Length != f.Length){
+		if(s.Length != f.Count()){
 			return;
 		}
 		privateContent.AddRange(s.ToCharArray());
-		for(int i = 0; i < s.Length; i++){
-			format.Add(f[i]);
-		}
+		format.AddRange(f);
 		flagToBuild = true;
 	}
 	
@@ -420,6 +438,25 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
 		privateContent.AddRange(f.privateContent.ToArray());
 		format.AddRange(f.format.ToArray());
 		flagToBuild = true;
+	}
+	
+	public void Append(ICollection<(char, CharFormat?)> f){
+		if(f == null){
+			return;
+		}
+		privateContent.AddRange(f.Select(n => n.Item1));
+		format.AddRange(f.Select(n => n.Item2));
+		flagToBuild = true;
+	}
+	
+	public void Append((char, CharFormat?) f){
+		privateContent.Add(f.Item1);
+		format.Add(f.Item2);
+		flagToBuild = true;
+	}
+	
+	public void Add((char, CharFormat?) f){
+		Append(f);
 	}
 	
 	/* public void Append(string s, params object[] objs){
@@ -579,7 +616,7 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
 						break;
 						
 						case "0": //Reset all
-						f = new CharFormat(0, false, 0, false, null, true, null, true);
+						f = CharFormat.ResetAll;
 						increment = true;
 						break;
 						
@@ -653,13 +690,38 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
 		}
 	} */
 	
+	public bool Contains((char, CharFormat?) f){
+		for(int i = 0; i < privateContent.Count; i++){
+			if(privateContent[i] == f.Item1 && format[i] == f.Item2){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public bool Remove((char, CharFormat?) f){
+		for(int i = 0; i < privateContent.Count; i++){
+			if(privateContent[i] == f.Item1 && format[i] == f.Item2){
+				privateContent.RemoveAt(i);
+				format.RemoveAt(i);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public void CopyTo((char, CharFormat?)[] array, int index){
+		(char, CharFormat?)[] f= privateContent.Zip(format, (first, second) => (first, second)).ToArray();
+		f.CopyTo(array, index);
+	}
+	
 	public FormatString Substring(int si, int n){
-		if(si < 0 || n < 0 || si >= length){
+		if(si < 0 || n < 0 || si >= Length){
 			return new FormatString();
 		}
 		
-		if(si + n > length){
-			n = length - si;
+		if(si + n > Length){
+			n = Length - si;
 		}
 		
 		FormatString f = new FormatString();
@@ -705,48 +767,51 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
 		return l.ToArray();
 	}
 	
-	public void DeleteStart(int n){
+	public bool RemoveFromStart(int n){
 		if(n < 0){
-			return;
+			return false;
 		}
 		
-		if(n > length){
-			n = length;
+		if(n > Length){
+			n = Length;
 		}
 		
 		privateContent.RemoveRange(0, n);
 		format.RemoveRange(0, n);
 		flagToBuild = true;
+		return true;
 	}
 	
-	public void DeleteEnd(int n){
+	public bool RemoveFromEnd(int n){
 		if(n < 0){
-			return;
+			return false;
 		}
 		
-		if(n > length){
-			n = length;
+		if(n > Length){
+			n = Length;
 		}
 		
-		int l = length;
+		int l = Length;
 		
 		privateContent.RemoveRange(l - n, n);
 		format.RemoveRange(l - n, n);
 		flagToBuild = true;
+		return true;
 	}
 	
-	public void Delete(int si, int n){
-		if(si < 0 || n < 0 || si >= length){
-			return;
+	public bool RemoveRange(int si, int n){
+		if(si < 0 || n < 0 || si >= Length){
+			return false;
 		}
 		
-		if(si + n > length){
-			n = length - si;
+		if(si + n > Length){
+			n = Length - si;
 		}
 		
 		privateContent.RemoveRange(si, n);
 		format.RemoveRange(si, n);
 		flagToBuild = true;
+		return true;
 	}
 	
 	public override string ToString(){
@@ -836,6 +901,10 @@ public class FormatString : IEnumerable<(char, CharFormat)>{
             return this == other;
         else
             return false;
+    }
+	
+	public bool Equals(FormatString? fs){
+		return this == fs;
     }
 	
 	/* public static void test(){

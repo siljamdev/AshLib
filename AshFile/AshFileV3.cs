@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Collections;
 using AshLib.Dates;
 
 namespace AshLib.AshFiles;
@@ -346,7 +347,7 @@ public partial class AshFile{
 		#region write
 		
 		//Write
-		public static byte[] Write(Dictionary<string, object> d, AshFileFormatConfig conf){
+		public static byte[] Write(IDictionary<string, object> d, AshFileFormatConfig conf){
 			List<byte> bytes = new List<byte>();
 			List<byte> temp = new List<byte>();
 			
@@ -390,11 +391,11 @@ public partial class AshFile{
 			
 			if(conf.compactBools){
 				WriteEHFL(temp, (ulong) bools.Count);
-				foreach(KeyValuePair<string, bool> kvp in bools){
-					WriteCampName(temp, kvp.Key, conf.maskCampNames);
+				foreach(string s in bools.Keys){
+					WriteCampName(temp, s, conf.maskCampNames);
 				}
 				
-				temp.AddRange(CompactBoolArray(bools.Values.ToArray()));
+				temp.AddRange(CompactBoolArray(bools.Values.ToList()));
 			}
 			
 			WriteEHFL(temp, (ulong) campNum);
@@ -404,8 +405,8 @@ public partial class AshFile{
 		}
 		
 		private static bool WriteCampValue(List<byte> bytes, object o, bool mask, bool compactBools){
-			if(o is Array array){
-				Type elementType = array.GetType().GetElementType();
+			if(o is IEnumerable array && o is not string){
+				Type elementType = AshFile.GetBaseTypeOfEnumerable(array);
 				AshFileType t = GetFileTypeFromType(elementType);
 				if(t == AshFileType.Default){
 					return false;
@@ -413,15 +414,24 @@ public partial class AshFile{
 				byte b = (byte) ((byte) t | 128);
 				bytes.Add(b);
 				
-				WriteHFL(bytes, (ulong) array.Length);
+				List<byte> tempVals = new();
+				
 				if(t == AshFileType.Bool && compactBools){
-					bytes.AddRange(CompactBoolArray((bool[]) array));
+					IList<bool> l = ((IEnumerable<bool>) array).ToList();
+					WriteHFL(bytes, (ulong) l.Count);
+					bytes.AddRange(CompactBoolArray(l));
 					return true;
 				}
 				
+				int count = 0;
 				foreach(object i in array){
-					WriteCampType(bytes, i, mask);
+					if(WriteCampType(tempVals, i, mask)){
+						count++;
+					}
 				}
+				WriteHFL(bytes, (ulong) count);
+				bytes.AddRange(tempVals);
+				
 				return true;
 			}
 			
@@ -534,28 +544,6 @@ public partial class AshFile{
 			return true;
 		}
 		
-		private static AshFileType GetFileTypeFromType(Type type){
-			if (type == typeof(string)) return AshFileType.String;
-			if (type == typeof(byte)) return AshFileType.Byte;
-			if (type == typeof(ushort)) return AshFileType.Ushort;
-			if (type == typeof(uint)) return AshFileType.Uint;
-			if (type == typeof(ulong)) return AshFileType.Ulong;
-			if (type == typeof(sbyte)) return AshFileType.Sbyte;
-			if (type == typeof(short)) return AshFileType.Short;
-			if (type == typeof(int)) return AshFileType.Int;
-			if (type == typeof(long)) return AshFileType.Long;
-			if (type == typeof(Color3)) return AshFileType.Color3;
-			if (type == typeof(float)) return AshFileType.Float;
-			if (type == typeof(double)) return AshFileType.Double;
-			if (type == typeof(Vec2)) return AshFileType.Vec2;
-			if (type == typeof(Vec3)) return AshFileType.Vec3;
-			if (type == typeof(Vec4)) return AshFileType.Vec4;
-			if (type == typeof(bool)) return AshFileType.Bool;
-			if (type == typeof(Date)) return AshFileType.Date;
-		
-			return AshFileType.Default; // Default case if no matching type
-		}
-		
 		private static void WriteFloat4(List<byte> bytes, float b){
 			byte[] l = BitConverter.GetBytes(b);
 			byte[] e = EnsureEndianess(l, 4);
@@ -658,10 +646,10 @@ public partial class AshFile{
 			return b;
 		}
 		
-		private static byte[] CompactBoolArray(bool[] b){
-			byte[] y = new byte[(b.Length + 8 - 1) / 8];
+		private static byte[] CompactBoolArray(IList<bool> b){
+			byte[] y = new byte[(b.Count + 8 - 1) / 8];
 			
-			for(int i = 0; i < b.Length; i++){
+			for(int i = 0; i < b.Count; i++){
 				y[i / 8] |= (byte) ((b[i] ? 1 : 0) << (i % 8));
 			}
 			

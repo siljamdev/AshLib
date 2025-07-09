@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Collections;
 using AshLib.Trees;
 using AshLib.Formatting;
 
@@ -7,12 +8,12 @@ namespace AshLib.AshFiles;
 
 public partial class AshFile{
 	
-	public const string DefaultSeparator = ".";
+	public const string defaultSeparator = ".";
 	
-	public TreeNode<string> GetCampTree(string separator = DefaultSeparator){
+	public TreeNode<string> GetKeyTree(string separator = defaultSeparator){
 		TreeNode<string> root = new TreeNode<string>(null);
 		
-		foreach(KeyValuePair<string, object> kvp in this.data){
+		foreach(KeyValuePair<string, object> kvp in this){
 			string[] p = kvp.Key.Split(separator);
 			TreeNode<string> c = root;
 			int i = 0;
@@ -35,22 +36,23 @@ public partial class AshFile{
 		return root;
 	}
 	
-	public TreeNode<string> GetValueTree(string separator = DefaultSeparator){
-		TreeNode<string> r = GetCampTree(separator);
+	public TreeNode<string> GetValueTree(string separator = defaultSeparator){
+		TreeNode<string> r = GetKeyTree(separator);
 		List<TreeNode<string>> cs = r.GetAllNodes();
 		
 		Dictionary<TreeNode<string>, string> changes = new Dictionary<TreeNode<string>, string>();
 		
 		foreach(TreeNode<string> n in cs){
 			string s = GetWholeCampName(n.GetPathToRoot(), separator);
-			if(ExistsCamp(s)){
-				if(GetCamp(s) is Array array){
+			if(this.ContainsKey(s)){
+				object v = this.GetValue(s);
+				if(v is IEnumerable array && v is not string){
 					foreach(object a in array){
-						n.AddChild(new TreeNode<string>(a.ToString()));
+						n.AddChild(new TreeNode<string>(a?.ToString()));
 					}
 					changes.Add(n, n.value + ":");
 				}else{
-					changes.Add(n, n.value + ": " + GetCamp(s).ToString());
+					changes.Add(n, n.value + ": " + v?.ToString());
 				}
 			}
 		}
@@ -64,22 +66,23 @@ public partial class AshFile{
 		return r;
 	}
 	
-	public TreeNode<FormatString> GetFormattedValueTree(CharFormat? name, CharFormat? val, string separator = DefaultSeparator){
-		TreeNode<FormatString> r = GetCampTree(separator).Clone(n => new TreeNode<FormatString>(new FormatString(n.value, name)));
+	public TreeNode<FormatString> GetFormattedValueTree(CharFormat? name, CharFormat? val, string separator = defaultSeparator){
+		TreeNode<FormatString> r = GetKeyTree(separator).Clone(n => new TreeNode<FormatString>(new FormatString(n.value, name)));
 		List<TreeNode<FormatString>> cs = r.GetAllNodes();
 		
 		Dictionary<TreeNode<FormatString>, FormatString> changes = new Dictionary<TreeNode<FormatString>, FormatString>();
 		
 		foreach(TreeNode<FormatString> n in cs){
 			string s = GetWholeCampName(n.GetPathToRoot(), separator);
-			if(ExistsCamp(s)){
-				if(GetCamp(s) is Array array){
+			if(this.ContainsKey(s)){
+				object v = this.GetValue(s);
+				if(v is IEnumerable array && v is not string){
 					foreach(object a in array){
-						n.AddChild(new TreeNode<FormatString>(new FormatString(a.ToString(), val)));
+						n.AddChild(new TreeNode<FormatString>(new FormatString(a?.ToString(), val)));
 					}
 					changes.Add(n, n.value + new FormatString(":", val));
 				}else{
-					changes.Add(n, n.value + new FormatString(": " + GetCamp(s).ToString(), val));
+					changes.Add(n, n.value + new FormatString(": " + v?.ToString(), val));
 				}
 			}
 		}
@@ -93,27 +96,27 @@ public partial class AshFile{
 		return r;
 	}
 	
-	public string VisualizeAsTree(string separator = DefaultSeparator){
+	public string VisualizeAsTree(string separator = defaultSeparator){
 		return GetValueTree(separator).ToString();
 	}
 	
-	public FormatString VisualizeAsFormattedTree(CharFormat? line, CharFormat? name, CharFormat? val, string separator = DefaultSeparator){
+	public FormatString VisualizeAsFormattedTree(CharFormat? line, CharFormat? name, CharFormat? val, string separator = defaultSeparator){
 		return GetFormattedValueTree(name, val, separator).ToFormattedString(line, val);
 	}
 	
-	private string GetWholeCampName(List<TreeNode<string>> p, string separator = DefaultSeparator) {
+	private string GetWholeCampName(List<TreeNode<string>> p, string separator = defaultSeparator) {
 		return string.Join(separator, p.Skip(1).Select(node => node.value));
 	}
 	
-	private string GetWholeCampName(List<TreeNode<FormatString>> p, string separator = DefaultSeparator) {
+	private string GetWholeCampName(List<TreeNode<FormatString>> p, string separator = defaultSeparator) {
 		return string.Join(separator, p.Skip(1).Select(node => node.value.content));
 	}
 	
 	public string Visualize(){
 		StringBuilder s = new StringBuilder();
 		bool f = false;
-		foreach(KeyValuePair<string, object> kvp in this.data){
-			if(kvp.Value is Array a){
+		foreach(KeyValuePair<string, object> kvp in this){
+			if(kvp.Value is IEnumerable a && kvp.Value is not string){
 				if(f){
 					s.Append(Environment.NewLine);
 				}
@@ -129,7 +132,7 @@ public partial class AshFile{
 						s.Append(tab);
 					}
 					
-					string val = o.ToString();
+					string val = o?.ToString();
 					string[] lines = val.Split(new string[]{"\r\n", "\n", "\r"}, StringSplitOptions.None);
 					
 					if(lines.Length > 1){
@@ -157,7 +160,7 @@ public partial class AshFile{
 				s.Append(": ");
 				string tab = new string(' ', kvp.Key.Length + 2);
 				
-				string val = kvp.Value.ToString();
+				string val = kvp.Value?.ToString();
 				string[] lines = val.Split(new string[]{"\r\n", "\n", "\r"}, StringSplitOptions.None);
 				
 				if(lines.Length > 1){
@@ -183,8 +186,8 @@ public partial class AshFile{
 	public FormatString VisualizeFormatted(CharFormat? name, CharFormat? val){
 		FormatString s = new FormatString();
 		bool f = false;
-		foreach(KeyValuePair<string, object> kvp in this.data){
-			if(kvp.Value is Array a){
+		foreach(KeyValuePair<string, object> kvp in this){
+			if(kvp.Value is IEnumerable a && kvp.Value is not string){
 				if(f){
 					s.Append(Environment.NewLine);
 				}
@@ -200,7 +203,7 @@ public partial class AshFile{
 						s.Append(tab);
 					}
 					
-					string val2 = o.ToString();
+					string val2 = o?.ToString();
 					string[] lines = val2.Split(new string[]{"\r\n", "\n", "\r"}, StringSplitOptions.None);
 					
 					if(lines.Length > 1){
@@ -228,7 +231,7 @@ public partial class AshFile{
 				s.Append(": ", val);
 				string tab = new string(' ', kvp.Key.Length + 2);
 				
-				string val2 = kvp.Value.ToString();
+				string val2 = kvp.Value?.ToString();
 				string[] lines = val2.Split(new string[]{"\r\n", "\n", "\r"}, StringSplitOptions.None);
 				
 				if(lines.Length > 1){
