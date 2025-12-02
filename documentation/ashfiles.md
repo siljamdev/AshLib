@@ -19,7 +19,7 @@ a.SetCamp("num", -57.8);
 There are many more options, check the [Reference Documentation](./AshLibReferenceDocumentation.pdf) or [Usage Documentation](./AshLibUsageDocumentation.pdf).  
 
 ## Byte format
-AshFiles supprt being converted to a very compact byte format. The current version is V3.
+AshFiles supprt being converted to a very compact byte format. The current version is V4.
 
 You can easily do this like:
 ```cs
@@ -29,7 +29,7 @@ byte[] b = a.WriteToBytes();
 a.Save("file.ash");
 ```
 
-There are many options for this byte format, like the format itself (V1, V2, V3), `compactBools`, `maskCampNames`, `maskStrings`.
+There are many options for this byte format, like the format itself (V1, V2, V3, V4), `compactBools`, `maskCampNames`, `maskStrings` and an optional `password`.
 
 ## String format
 There is also a somewhat readable string format:
@@ -41,7 +41,7 @@ Any amount of whitespace is okay.
 List of supported types:
 |Symbol|Type|Value specifications|
 |--:|:--|---|
-|@|string|values must be enclosed with “”|
+|@|string|values must be enclosed with ""|
 |ub|byte| |
 |us|ushort| |
 |ui|uint| |
