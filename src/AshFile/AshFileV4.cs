@@ -1,29 +1,50 @@
 using System;
 using System.Text;
 using System.Collections;
+using System.Security.Cryptography;
 using AshLib.Dates;
 
 namespace AshLib.AshFiles;
 
 public partial class AshFile{
-	protected internal class V3{
+	protected internal class V4{
 		#region read
 		//Read
-		public static Dictionary<string, object> Read(byte[] fileBytes, out AshFileFormatConfig conf){
+		public static Dictionary<string, object> Read(byte[] fileBytes, string password, out AshFileFormatOptions conf){
 			Dictionary<string, object> dic = new Dictionary<string, object>();
 			
 			ulong index = 5; //We start at 5 because 0 is version, and then %ASH comes
-			AshFileFormatConfig config = new AshFileFormatConfig(fileBytes[index]);
-			conf = config;
+			AshFileFormatOptions config = new AshFileFormatOptions(fileBytes[0], fileBytes[index]);
+			
 			index++;
+			
+			bool usesPassword = false;
+			
+			if(config.password != null){
+				usesPassword = true;
+				if(password == null){
+					throw new AshFileException("File is password protected, and no password was provided", 3);
+				}
+				
+				try{
+					fileBytes = DecryptAES(fileBytes.Skip((int) index).ToArray(), password);
+				}catch(Exception e){
+					throw new AshFileException("Error occured on decryption", 3, e);
+				}
+				
+				index = 0;
+			}
+			
+			conf = config with {password = password};
+			
 			if(config.compactBools){
 				try{
-					ulong boolNum = ReadEHFL(fileBytes, ref index); //Read the number of bools
+					ulong boolNum = ReadVarNum(fileBytes, ref index); //Read the number of bools
 					
 					List<string> names = new List<string>((int)boolNum);
 					
 					for(ulong i = 0; i < boolNum; i++){
-						names.Add(ReadCampName(fileBytes, ref index, config.maskCampNames));
+						names.Add(ReadCampName(fileBytes, ref index, config.maskCampNames && !usesPassword));
 					}
 					
 					byte[] y = new byte[(boolNum + 8 - 1) / 8];
@@ -35,23 +56,23 @@ public partial class AshFile{
 						dic.Add(names[i], bools[i]);
 					}
 				}catch(Exception e){
-					AshFile.HandleException(e, "####An error occurred while reading booldict!####");
+					throw new AshFileException("Error occured while reading V4", 3, e);
 				}
 			}
-			ulong campNum = ReadEHFL(fileBytes, ref index); //Read the number of camps
+			ulong campNum = ReadVarNum(fileBytes, ref index); //Read the number of camps
 			
 			for(ulong i = 0; i < campNum; i++){
 				try{
-					string campName = ReadCampName(fileBytes, ref index, config.maskCampNames);
+					string campName = ReadCampName(fileBytes, ref index, config.maskCampNames && !usesPassword);
 					
-					object campValue = ReadCampValue(fileBytes, ref index, config.maskStrings, config.compactBools);
+					object campValue = ReadCampValue(fileBytes, ref index, config.maskStrings && !usesPassword, config.compactBools);
 					
 					if(dic.ContainsKey(campName)){
-						throw new AshFileException("The dictionary already has a camp named " + campName, 4);
+						throw new AshFileException("The dictionary already has a camp named " + campName, 3);
 					}
 					dic.Add(campName, campValue);
 				} catch(Exception e){
-					AshFile.HandleException(e, "####An error occurred while reading!####");
+					throw new AshFileException("Error occured while reading V4", 3, e);
 				}
 			}
 			
@@ -68,12 +89,12 @@ public partial class AshFile{
 			if(t > 127){
 				t &= 127;
 				
-				Type y = GetTypeFromEnum((AshFileType) t);
+				Type y = AshFile.GetTypeFromEnum((AshFileType) t);
 				if(y == typeof(object)){
 					return null;
 				}
 				
-				ulong length = ReadHFL(fileBytes, ref index);
+				ulong length = ReadVarNum(fileBytes, ref index);
 				
 				if((AshFileType) t == AshFileType.Bool && compactBools){
 					byte[] by = new byte[(length + 8 - 1) / 8];
@@ -96,14 +117,14 @@ public partial class AshFile{
 			switch((AshFileType) t){
 				default:
 				case AshFileType.Default:
-					ulong length = ReadHFL(fileBytes, ref index);
+					ulong length = ReadVarNum(fileBytes, ref index);
 					
 					byte[] b = new byte[length];
 					Buffer.BlockCopy(fileBytes, (int) index, b, 0, (int) length);
 					index += length;
 					return b;
 				case AshFileType.String:
-					length = ReadEHFL(fileBytes, ref index);
+					length = ReadVarNum(fileBytes, ref index);
 					
 					byte[] vv = new byte[(int) length];
 					Array.Copy(fileBytes, (int) index, vv, 0, (int) length);
@@ -226,6 +247,27 @@ public partial class AshFile{
 					ushort years = (ushort)((combined >> 26) & 0x03FF);
 					
 					return new Date(seconds, minutes, hours, days, months, (ushort)(years + 1488));
+				case AshFileType.Decimal:					
+					int[] its = new int[4];
+					
+					n1 = index;
+					b = EnsureEndianess(fileBytes, ref n1, 4);
+					its[0] = BitConverter.ToInt32(b, (int) n1);
+					n1 = index + 4;
+					b = EnsureEndianess(fileBytes, ref n1, 4);
+					its[1] = BitConverter.ToInt32(b, (int) n1);
+					n1 = index + 8;
+					b = EnsureEndianess(fileBytes, ref n1, 4);
+					its[2] = BitConverter.ToInt32(b, (int) n1);
+					n1 = index + 12;
+					b = EnsureEndianess(fileBytes, ref n1, 4);
+					its[3] = BitConverter.ToInt32(b, (int) n1);
+					
+					decimal dec = new decimal(its);
+					
+					index += 16;
+					
+					return dec;
 			}
 		}
 		
@@ -237,33 +279,11 @@ public partial class AshFile{
 			return f;
 		}
 		
-		private static Type GetTypeFromEnum(AshFileType fileType){
-			switch (fileType){
-				case AshFileType.String: return typeof(string);
-				case AshFileType.Byte: return typeof(byte);
-				case AshFileType.Ushort: return typeof(ushort);
-				case AshFileType.Uint: return typeof(uint);
-				case AshFileType.Ulong: return typeof(ulong);
-				case AshFileType.Sbyte: return typeof(sbyte);
-				case AshFileType.Short: return typeof(short);
-				case AshFileType.Int: return typeof(int);
-				case AshFileType.Long: return typeof(long);
-				case AshFileType.Color3: return typeof(Color3); // Example for Color3 (need a proper type here)
-				case AshFileType.Float: return typeof(float);
-				case AshFileType.Double: return typeof(double);
-				case AshFileType.Vec2: return typeof(Vec2); // Example for Vec2
-				case AshFileType.Vec3: return typeof(Vec3); // Example for Vec3
-				case AshFileType.Vec4: return typeof(Vec4); // Example for Vec4
-				case AshFileType.Bool: return typeof(bool);
-				case AshFileType.Date: return typeof(Date);
-				default: return typeof(object); // Default case if no matching type
-			}
-		}
-		
 		private static string ReadCampName(byte[] fileBytes, ref ulong index, bool mask){
-			ulong length = ReadEHFL(fileBytes, ref index);
+			ulong length = ReadVarNum(fileBytes, ref index);
 			
 			byte[] b = new byte[(int) length];
+			
 			Array.Copy(fileBytes, (int) index, b, 0, (int) length);
 			
 			if(mask){
@@ -275,59 +295,36 @@ public partial class AshFile{
 			return s;
 		}
 		
-		private static ulong ReadHFL(byte[] fileBytes, ref ulong index){
-			byte size = fileBytes[index];
-			index++;
-			return ReadUNumberSize(fileBytes, ref index, size);
-		}
-		
-		private static ulong ReadEHFL(byte[] fileBytes, ref ulong index){
-			if(fileBytes[index] == 0){
-				byte size = fileBytes[index + 1];
-				index += 2;
-				return ReadUNumberSize(fileBytes, ref index, size);
-				
-			}
-			ulong l = (ulong) fileBytes[index];
-			index++;
-			return l;
-		}
-		
-		private static ulong ReadUNumberSize(byte[] fileBytes, ref ulong index, byte size){
-			switch(size){
-				case 1:
-				byte b1 = fileBytes[index];
+		private static ulong ReadVarNum(byte[] fileBytes, ref ulong index){
+			switch(fileBytes[index]){
+				case 253:
 				index++;
-				return (ulong) b1;
-				
-				case 2:
 				ulong n2 = index;
-				byte[] b2 = EnsureEndianess(fileBytes, ref n2, (ulong) size);
+				byte[] b2 = EnsureEndianess(fileBytes, ref n2, 2);
 				ushort us = BitConverter.ToUInt16(b2, (int) n2);
 				index += 2;
 				return (ulong) us;
 				
-				case 4:
+				case 254:
+				index++;
 				ulong n3 = index;
-				byte[] b3 = EnsureEndianess(fileBytes, ref n3, (ulong) size);
+				byte[] b3 = EnsureEndianess(fileBytes, ref n3, 4);
 				uint ui = BitConverter.ToUInt32(b3, (int) n3);
 				index += 4;
 				return (ulong) ui;
 				
-				case 8:
+				case 255:
+				index++;
 				ulong n4 = index;
-				byte[] b4 = EnsureEndianess(fileBytes, ref n4, (ulong) size);
+				byte[] b4 = EnsureEndianess(fileBytes, ref n4, 8);
 				ulong ul = BitConverter.ToUInt64(b4, (int) n4);
 				index += 8;
 				return (ulong) ul;
 				
 				default:
-				ulong u = 0;
-				for(ulong i = 0; i < size; i++){
-					u += (ulong) fileBytes[index + i] << (8 * (int) i);
-				}
-				index += (ulong) size;
-				return u;
+				byte b1 = fileBytes[index];
+				index++;
+				return (ulong) b1;
 			}
 		}
 		
@@ -342,24 +339,24 @@ public partial class AshFile{
 			ind = 0;
 			return f;
 		}
-		#endregion
+		#endregion read
 		
 		#region write
-		
 		//Write
-		public static byte[] Write(IDictionary<string, object> d, AshFileFormatConfig conf){
+		public static byte[] Write(IDictionary<string, object> d, AshFileFormatOptions conf){
 			List<byte> bytes = new List<byte>();
 			List<byte> temp = new List<byte>();
 			
 			ulong campNum = 0;
 			
+			bool usesPassword = conf.password != null;
+			
 			List<KeyValuePair<string, object>> dictionary = new List<KeyValuePair<string, object>>((ICollection<KeyValuePair<string, object>>)d);
-			//((ICollection<KeyValuePair<string, object>>)d).CopyTo(dictionary, 0);
 			
+			//Find Bools
 			Dictionary<string, bool> bools = new Dictionary<string, bool>();
-			
-			try{
-				if(conf.compactBools){
+			if(conf.compactBools){
+				try{
 					for(ulong i = 0; i < (ulong) dictionary.Count; i++){
 						if(dictionary[(int) i].Value is bool b){
 							bools.Add(dictionary[(int) i].Key, b);
@@ -367,39 +364,51 @@ public partial class AshFile{
 							i--;
 						}
 					}
+				}catch(Exception e){
+					throw new AshFileException("Error occured while writing V4", 3, e);
 				}
-			}catch(Exception e){
-				AshFile.HandleException(e, "####An error occurred while writing booldict!####");
 			}
 			
+			//Write other camps to bytes
 			for(ulong i = 0; i < (ulong) dictionary.Count; i++){
 				try{
 					temp.Clear();
-					if(WriteCampValue(temp, dictionary[(int)i].Value, conf.maskStrings, conf.compactBools)){
+					if(WriteCampValue(temp, dictionary[(int)i].Value, conf.maskStrings && !usesPassword, conf.compactBools)){
 						campNum++;
-						WriteCampName(bytes, dictionary[(int)i].Key, conf.maskCampNames);
+						WriteCampName(bytes, dictionary[(int)i].Key, conf.maskCampNames && !usesPassword);
 						bytes.AddRange(temp);
 					}
-				} catch(Exception e){
-					AshFile.HandleException(e, "####An error occurred while writing!####");
+				}catch(Exception e){
+					throw new AshFileException("Error occured while writing V4", 3, e);
 				}
 			}
+			
 			temp.Clear();
-			temp.Add(3);
-			temp.AddRange(Encoding.UTF8.GetBytes("%ASH"));
+			temp.Add(4);
+			temp.AddRange(Encoding.UTF8.GetBytes("%ASH")); //Magic number
 			temp.Add(conf.ToByte()); //Config
 			
+			List<byte> temp2 = new List<byte>();
+			
+			//Write bool dict
 			if(conf.compactBools){
-				WriteEHFL(temp, (ulong) bools.Count);
+				WriteVarNum(temp2, (ulong) bools.Count);
 				foreach(string s in bools.Keys){
-					WriteCampName(temp, s, conf.maskCampNames);
+					WriteCampName(temp2, s, conf.maskCampNames && !usesPassword);
 				}
 				
-				temp.AddRange(CompactBoolArray(bools.Values.ToList()));
+				temp2.AddRange(CompactBoolArray(bools.Values.ToList()));
 			}
 			
-			WriteEHFL(temp, (ulong) campNum);
-			temp.AddRange(bytes);
+			//Merge main body
+			WriteVarNum(temp2, (ulong) campNum);
+			temp2.AddRange(bytes);
+			
+			if(conf.password != null){
+				temp2 = EncryptAES(temp2.ToArray(), conf.password).ToList();
+			}
+			
+			temp.AddRange(temp2);
 			
 			return temp.ToArray();
 		}
@@ -418,7 +427,7 @@ public partial class AshFile{
 				
 				if(t == AshFileType.Bool && compactBools){
 					IList<bool> l = ((IEnumerable<bool>) array).ToList();
-					WriteHFL(bytes, (ulong) l.Count);
+					WriteVarNum(bytes, (ulong) l.Count);
 					bytes.AddRange(CompactBoolArray(l));
 					return true;
 				}
@@ -429,7 +438,7 @@ public partial class AshFile{
 						count++;
 					}
 				}
-				WriteHFL(bytes, (ulong) count);
+				WriteVarNum(bytes, (ulong) count);
 				bytes.AddRange(tempVals);
 				
 				return true;
@@ -449,7 +458,7 @@ public partial class AshFile{
 						b = Scramble(b);
 					}
 					
-					WriteEHFL(bytes, (ulong) b.Length);
+					WriteVarNum(bytes, (ulong) b.Length);
 					bytes.AddRange(b);
 					break;
 				case byte by:
@@ -538,6 +547,15 @@ public partial class AshFile{
 					
 					bytes.AddRange(fbytes);
 					break;
+				case decimal dec:
+					int[] its = decimal.GetBits(dec);
+					foreach(int its2 in its){
+						b = BitConverter.GetBytes(its2);
+						e = EnsureEndianess(b, 4);
+						
+						bytes.AddRange(e);
+					}
+					break;
 				default:
 					return false;
 			}
@@ -557,91 +575,59 @@ public partial class AshFile{
 				b = Scramble(b);
 			}
 			
-			WriteEHFL(bytes, (ulong) b.Length);
+			WriteVarNum(bytes, (ulong) b.Length);
 			bytes.AddRange(b);
 		}
 		
-		private static void WriteEHFL(List<byte> bytes, ulong length){
-			if(length == 0){
-				bytes.Add(0);
-				bytes.Add(0);
-				return;
-			}
-			
-			if(length < 256){
-				bytes.Add((byte) length);
-				return;
-			}
-			bytes.Add(0);
-			
-            if(length < 65536){
-                bytes.Add(2);
-				byte[] l = BitConverter.GetBytes(length);
+		private static void WriteVarNum(List<byte> bytes, ulong num){
+			if(num <= 252ul){
+				bytes.Add((byte) num);
+			}else if(num <= 65535ul){
+				bytes.Add(253);
+				byte[] l = BitConverter.GetBytes((ushort) num);
 				byte[] e = EnsureEndianess(l, 2);
                 bytes.AddRange(e);
-            }else if (length < 4294967296){
-                bytes.Add(4);
-				byte[] l = BitConverter.GetBytes(length);
+			}else if(num <= 4294967295ul){
+				bytes.Add(254);
+				byte[] l = BitConverter.GetBytes((uint) num);
 				byte[] e = EnsureEndianess(l, 4);
                 bytes.AddRange(e);
-            }else{
-                bytes.Add(8);
-				byte[] l = BitConverter.GetBytes(length);
+			}else{
+				bytes.Add(255);
+				byte[] l = BitConverter.GetBytes(num);
 				byte[] e = EnsureEndianess(l, 8);
                 bytes.AddRange(e);
-            }
-			
-		}
-		
-		private static void WriteHFL(List<byte> bytes, ulong length){			
-            if (length < 256){
-                bytes.Add(1);
-				byte[] l = BitConverter.GetBytes(length);
-				byte[] e = EnsureEndianess(l, 1);
-                bytes.Add(e[0]);
-            } else if (length < 65536){
-                bytes.Add(2);
-				byte[] l = BitConverter.GetBytes(length);
-				byte[] e = EnsureEndianess(l, 2);
-                bytes.AddRange(e);
-            } else if (length < 4294967296){
-                bytes.Add(4);
-				byte[] l = BitConverter.GetBytes(length);
-				byte[] e = EnsureEndianess(l, 4);
-                bytes.AddRange(e);
-            } else{
-                bytes.Add(8);
-				byte[] l = BitConverter.GetBytes(length);
-				byte[] e = EnsureEndianess(l, 8);
-                bytes.AddRange(e);
-            }
+			}
 		}
 		
 		private static byte[] EnsureEndianess(byte[] bytes, ulong size){
 			byte[] result = new byte[size];
 
-			if (BitConverter.IsLittleEndian){
+			if(BitConverter.IsLittleEndian){
 				for (ulong i = 0; i < size; i++){
 					result[i] = bytes[i];
 				}
 				return result;
 			}
-			for (ulong i = 0; i < size; i++){
+			
+			for(ulong i = 0; i < size; i++){
 				result[i] = bytes[(ulong) bytes.Length - i - 1];
 			}
 			return result;
 		}
+		#endregion
 		
+		#region utils
 		private static byte[] Scramble(byte[] b){
 			for(int i = 0; i < b.Length; i++){
-				b[i] = (byte) (b[i] + 13 + i);
+				b[i] = (byte) (b[i] + 21 + i);
 			}
 			return b;
 		}
 		
 		private static byte[] Unscramble(byte[] b){
 			for(int i = 0; i < b.Length; i++){
-				b[i] = (byte) (b[i] - 13 - i);
+				b[i] = (byte) (b[i] - 21 - i);
 			}
 			return b;
 		}
@@ -664,6 +650,64 @@ public partial class AshFile{
 			}
 			
 			return b;
+		}
+		
+		private static byte[] EncryptAES(byte[] body, string password){
+			//Random salt for deriving key
+			byte[] salt = new byte[16];
+			RandomNumberGenerator.Fill(salt);
+			
+			//deriving key from password
+			using var kdf = new Rfc2898DeriveBytes(password, salt, 100_000, HashAlgorithmName.SHA256);
+			byte[] key = kdf.GetBytes(32);
+			
+			//Random IV
+			byte[] iv = new byte[12];
+			RandomNumberGenerator.Fill(iv);
+			
+			//Output + auth tag
+			byte[] ciphertext = new byte[body.Length];
+			byte[] tag = new byte[16];
+			
+			using (var aes = new AesGcm(key)){
+				aes.Encrypt(iv, body, ciphertext, tag);
+			}
+			
+			List<byte> result = new(salt.Length + iv.Length + ciphertext.Length + tag.Length);
+			result.AddRange(salt);
+			result.AddRange(iv);
+			result.AddRange(ciphertext);
+			result.AddRange(tag);
+			
+			return result.ToArray();
+		}
+		
+		private static byte[] DecryptAES(byte[] encryptedData, string password){
+			byte[] salt = new byte[16];
+			byte[] iv = new byte[12];
+			byte[] tag = new byte[16];
+			
+			//Extract
+			Buffer.BlockCopy(encryptedData, 0, salt, 0, salt.Length);
+			Buffer.BlockCopy(encryptedData, salt.Length, iv, 0, iv.Length);
+			Buffer.BlockCopy(encryptedData, encryptedData.Length - tag.Length, tag, 0, tag.Length);
+			
+			//Extract ciphertext
+			int ciphertextLength = encryptedData.Length - salt.Length - iv.Length - tag.Length;
+			byte[] ciphertext = new byte[ciphertextLength];
+			Buffer.BlockCopy(encryptedData, salt.Length + iv.Length, ciphertext, 0, ciphertextLength);
+			
+			//Get key
+			using var kdf = new Rfc2898DeriveBytes(password, salt, 100_000, HashAlgorithmName.SHA256);
+			byte[] key = kdf.GetBytes(32);
+			
+			//Decrypt
+			byte[] plaintext = new byte[ciphertext.Length];
+			using (var aes = new AesGcm(key)){
+				aes.Decrypt(iv, ciphertext, tag, plaintext);
+			}
+		
+			return plaintext;
 		}
 		#endregion
 	}

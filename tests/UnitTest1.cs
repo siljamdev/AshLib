@@ -212,6 +212,32 @@ public class UnitTest1{
     }
 	
 	[Fact]
+    public void ashFileTest9(){
+		AshFile a = new AshFile();
+		
+		a.Set("st", "test");
+		a.Set("ba", (byte) 5);
+		a.Set("ba.adq", true);
+		a.Set("ba.ad2", true);
+		a.Set("ba.ssss.s", new bool[]{true, false});
+		a.Set("ba.us", (ushort) 5000);
+		a.Set("l", (long) 9325131);
+		a.Set("ba.c.c", new Color3(13, 14, 15));
+		a.Set("f", 3.178181f);
+		a.Set("v2", new Vec2(14f, 17f));
+		a.Set("dt", (Date)DateTime.Now);
+		a.Set("ar", new List<Color3>(){new Color3("FFFFFF"), new Color3("F00F00")});
+		
+		a.password = "passkeyy";
+		
+		AshFile b = AshFile.ReadFromBytes(a.WriteToBytes(), "passkeyy");
+		
+		bool c = a == b; //The test will do dictionary compare, not ashfile compare
+		
+		Assert.Equal(true, c);
+    }
+	
+	[Fact]
     public void listTest1(){
 		ReactiveList<int> a = new ReactiveList<int>(){1,2,3};
 		

@@ -19,11 +19,11 @@ public partial class AshFile{
 					object campValue = ReadCampValue(fileBytes, ref index);
 					
 					if(dic.ContainsKey(campName)){
-						throw new AshFileException("The dictionary already has a camp named " + campName, 4);
+						throw new AshFileException("The dictionary already has a camp named " + campName, 3);
 					}
 					dic.Add(campName, campValue);
 				} catch(Exception e){
-					AshFile.HandleException(e, "####An error occurred while reading!####");
+					throw new AshFileException("Error occured while reading V2", 3, e);
 				}
 			}
 			
@@ -604,7 +604,7 @@ public partial class AshFile{
 					bytes.Add((byte) GetAshFileTypeFromType(dictionary[i].Value.GetType()));
 					WriteCampValue(bytes, GetAshFileTypeFromType(dictionary[i].Value.GetType()), dictionary[i].Value);
 				} catch(Exception e){
-					AshFile.HandleException(e, "####An error occurred while writing!####");
+					throw new AshFileException("Error occured while writing V2", 3, e);
 				}
 			}
 			

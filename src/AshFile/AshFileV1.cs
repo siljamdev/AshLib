@@ -11,7 +11,7 @@ public partial class AshFile{
 			long headerLength = byteIndex;
 			
 			if(fileBytes.Length < fileLength + headerLength){
-				throw new AshFileException("Byte array length smaller than that specified in file");
+				throw new AshFileException("Byte array length smaller than that specified in file", 3);
 			}
 			
 			Dictionary<string, object> output = new Dictionary<string, object>(); //Will be the final product
@@ -73,7 +73,7 @@ public partial class AshFile{
 					break;
 					
 					default:
-					throw new AshFileException("Invalid or unknown data type in file");
+					throw new AshFileException("Invalid or unknown data type in file", 3);
 				}
 				output.Add(campName, val);
 			}

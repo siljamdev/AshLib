@@ -8,16 +8,22 @@ namespace AshLib.AshFiles;
 
 public partial class AshFile : IDictionary<string, object>, ICloneable, IEquatable<AshFile>
 {
+	
+	public const int latestFormat = 4;
+	
+	public static bool writeUseLatestFormat = false;
+	
 	Dictionary<string, object> data; //internal dict
 	public string? path;
-	public byte format;
 	
+	public byte format = latestFormat;
 	public bool compactBools = true;
 	public bool maskCampNames = true;
 	public bool maskStrings = true;
+	public string? password;
 	
-	public AshFileFormatConfig FormatConfig{get{
-		return new AshFileFormatConfig(compactBools, maskCampNames, maskStrings);
+	public AshFileFormatOptions FormatOptions{get{
+		return new AshFileFormatOptions(format, compactBools, maskCampNames, maskStrings, password);
 	}}
 	
 	public int Count{
@@ -38,18 +44,17 @@ public partial class AshFile : IDictionary<string, object>, ICloneable, IEquatab
 		}
 	}
 	
-	public const int currentVersion = 3;
-	
-	private static string conversionErrorLog;
-	private static ulong conversionErrorCount;
-	
 	//Constructors
 	
 	public AshFile(){
 		this.data = new Dictionary<string, object>();
-		this.format = currentVersion;
 	}
 	
+	public AshFile(IDictionary<string, object> d){
+		this.data = new Dictionary<string, object>(d);
+	}
+	
+	//Clone constructor
 	public AshFile(AshFile a) : this(){
 		if(a.path != null){
 			this.path = new string(a.path);
@@ -59,7 +64,7 @@ public partial class AshFile : IDictionary<string, object>, ICloneable, IEquatab
 			this.format = a.format;
 		}
 		
-		this.ImportFormatConfig(a.FormatConfig);
+		this.ImportFormatOptions(a.FormatOptions);
 		
 		if(a.data != null){
 			foreach(KeyValuePair<string, object> kvp in a){
@@ -72,29 +77,25 @@ public partial class AshFile : IDictionary<string, object>, ICloneable, IEquatab
 		}
 	}
 	
-	public AshFile(IDictionary<string, object> d){
-		this.data = new Dictionary<string, object>(d);
-		this.format = currentVersion;
-	}
-	
-	public AshFile(string path){
+	public AshFile(string path, string passw = null){
 		this.path = path;
 		if(!File.Exists(path)){
 			this.data = new Dictionary<string, object>();
-			this.format = currentVersion;
+			this.format = latestFormat;
 		}else{
-			this.data = ReadFromFile(path, out byte fo, out AshFileFormatConfig conf);
-			this.format = fo;
-			this.ImportFormatConfig(conf);
+			this.data = ReadFromFile(path, out AshFileFormatOptions conf, passw);
+			this.ImportFormatOptions(conf);
 		}
 	}
 	
 	//Other stuff
 	
-	public void ImportFormatConfig(AshFileFormatConfig conf){
+	public void ImportFormatOptions(AshFileFormatOptions conf){
+		this.format = conf.format;
 		this.compactBools = conf.compactBools;
 		this.maskCampNames = conf.maskCampNames;
 		this.maskStrings = conf.maskStrings;
+		this.password = conf.password;
 	}
 	
 	public IEnumerator<KeyValuePair<string, object>> GetEnumerator(){
@@ -108,139 +109,107 @@ public partial class AshFile : IDictionary<string, object>, ICloneable, IEquatab
 	
 	//================
 	
-	public void Load(string path){
+	public void Load(string path, string passw = null){
 		this.path = path;
-		data = ReadFromFile(path, out byte f, out AshFileFormatConfig conf);
-		this.format = f;
-		this.ImportFormatConfig(conf);
+		data = ReadFromFile(path, out AshFileFormatOptions conf, passw);
+		this.ImportFormatOptions(conf);
 	}
 	
-	public void Load(){
+	public void Load(string passw = null){
 		if(path == null){
 			throw new AshFileException("Path has not been initialized", 1);
 		}
-		data = ReadFromFile(path, out byte f, out AshFileFormatConfig conf);
-		this.format = f;
-		this.ImportFormatConfig(conf);
+		
+		data = ReadFromFile(path, out AshFileFormatOptions conf, passw);
+		this.ImportFormatOptions(conf);
 	}
 	
 	public void Save(string path){
 		this.path = path;
-		WriteToFile(path, data, this.format, this.FormatConfig);
+		WriteToFile(path, data, this.FormatOptions);
 	}
 	
 	public void Save(){
 		if(path == null){
 			throw new AshFileException("Path has not been initialized", 1);
 		}
-		WriteToFile(path, data, this.format, this.FormatConfig);
+		
+		WriteToFile(path, data, this.FormatOptions);
 	}
 	
-
+	
 	
 	//^^THINGS THE USER WILL USE^^ vvTHINGS THE USER COULD BUT WONT USEvv
 	
-	public static Dictionary<string, object> ReadFromFile(string path, out byte f, out AshFileFormatConfig conf){
+	//Read
+	
+	public static Dictionary<string, object> ReadFromFile(string path, out AshFileFormatOptions conf, string passw = null){
 		if(!File.Exists(path)){
 			throw new AshFileException("File in the path of \"" + path + "\" can't be found", 2);
 		}
+		
 		byte[] fileBytes = File.ReadAllBytes(path);
-		Dictionary<string, object> d = ReadFromBytes(fileBytes, out byte fo, out AshFileFormatConfig co);
-		f = fo;
-		conf = co;
+		Dictionary<string, object> d = ReadFromBytes(fileBytes, out conf, passw);
 		return d;
 	}
 	
-	public static Dictionary<string, object> ReadFromBytes(byte[] fileBytes, out byte f, out AshFileFormatConfig conf){
+	public static Dictionary<string, object> ReadFromBytes(byte[] fileBytes, out AshFileFormatOptions conf, string passw = null){
 		if(fileBytes.Length == 0){
-			f = currentVersion;
-			conf = AshFileFormatConfig.Default;
-			return new Dictionary<string, object>();
+			throw new AshFileException("Empty file bytes", 2);
 		}
-		f = fileBytes[0];
-		try{
-			switch(fileBytes[0]){
-				case 1:
-					conf = AshFileFormatConfig.Default;
-					return V1.Read(fileBytes);
-				case 2:
-					conf = AshFileFormatConfig.Default;
-					return V2.Read(fileBytes);
-				case 3:
-					return V3.Read(fileBytes, out conf);
-				default:
-					throw new AshFileException("Invalid or unknown file version", 3);
-			}
-		}catch(Exception e){
-			AshFile.HandleException(e, "####An error occurred while reading!####");
-			conf = AshFileFormatConfig.Default;
-			return new Dictionary<string, object>();
+		
+		switch(fileBytes[0]){
+			case 1:
+				conf = AshFileFormatOptions.Default with {format = 1};
+				return V1.Read(fileBytes);
+			case 2:
+				conf = AshFileFormatOptions.Default with {format = 2};
+				return V2.Read(fileBytes);
+			case 3:
+				return V3.Read(fileBytes, out conf);
+			case 4:
+				return V4.Read(fileBytes, passw, out conf);
+			default:
+				throw new AshFileException("Invalid or unknown file format: " + fileBytes[0], 3);
 		}
 	}
 	
-	public static AshFile ReadFromBytes(byte[] fileBytes){
-		Dictionary<string, object> d = ReadFromBytes(fileBytes, out byte f, out AshFileFormatConfig conf);
+	public static AshFile ReadFromBytes(byte[] fileBytes, string passw = null){
+		Dictionary<string, object> d = ReadFromBytes(fileBytes, out AshFileFormatOptions conf, passw);
 		
 		AshFile a = new AshFile(d);
-		a.format = f;
-		a.ImportFormatConfig(conf);
+		a.ImportFormatOptions(conf);
 		
 		return a;
 	}
 	
-	public static void WriteToFile(string path, Dictionary<string, object> dictionary, byte format, AshFileFormatConfig conf){
-		try{
-			File.WriteAllBytes(path, WriteToBytes(dictionary, format, conf));
-		} catch(Exception e){
-			throw new AshFileException("Exception occured when writing to file in path \"" + path + "\"", 5, e);
-		}
+	//Write
+	
+	public static void WriteToFile(string path, Dictionary<string, object> dictionary, AshFileFormatOptions conf){
+		File.WriteAllBytes(path, WriteToBytes(dictionary, conf));
 	}
 	
-	public static byte[] WriteToBytes(Dictionary<string, object> dictionary, byte format, AshFileFormatConfig conf){
-		switch(format){
+	public static byte[] WriteToBytes(Dictionary<string, object> dictionary, AshFileFormatOptions conf){
+		if(writeUseLatestFormat){
+			return V4.Write(dictionary, conf);
+		}
+		
+		switch(conf.format){
 			case 1:
 				return V1.Write(dictionary);
 			case 2:
 				return V2.Write(dictionary);
 			case 3:
 				return V3.Write(dictionary, conf);
+			case 4:
+				return V4.Write(dictionary, conf);
 			default:
-				throw new AshFileException("Invalid or unknown file version", 3);
+				throw new AshFileException("Invalid or unknown file format: " + conf.format, 3);
 		}
 	}
 	
 	public byte[] WriteToBytes(){
-		return WriteToBytes(this.data, this.format, this.FormatConfig);
-	}
-	
-	//ERROR HANDLING
-	
-	private static void HandleException(Exception e, string message){
-		if(e is AshFileException a){
-			conversionErrorCount++;
-			conversionErrorLog += message + "\n";
-			conversionErrorLog += a.GetFullMessage();
-		}else{
-			conversionErrorCount++;
-			conversionErrorLog += message + "\n";
-			conversionErrorLog += "Message: " + e.Message + "\n";
-			conversionErrorLog += "Source: " + e.Source + "\n";
-			conversionErrorLog += "Stack Trace: " + e.StackTrace + "\n";
-			conversionErrorLog += "Target Site: " + e.TargetSite + "\n";
-		}
-	}
-	
-	public static ulong GetErrorCount(){
-		return AshFile.conversionErrorCount;
-	}
-	
-	public static string GetErrorLog(){
-		return AshFile.conversionErrorLog;
-	}
-	
-	public static void EmptyErrors(){
-		AshFile.conversionErrorCount = 0;
-		AshFile.conversionErrorLog = "";
+		return WriteToBytes(this.data, this.FormatOptions);
 	}
 	
 	//OPERATOR THINGS
@@ -251,29 +220,7 @@ public partial class AshFile : IDictionary<string, object>, ICloneable, IEquatab
 	}
 	
 	public static AshFile Clone(AshFile a){
-		AshFile o = new AshFile();
-		
-		if(a.path != null){
-			o.path = new string(a.path);
-		}
-		
-		if(a.format != null){
-			o.format = a.format;
-		}
-		
-		o.ImportFormatConfig(a.FormatConfig);
-		
-		if(a.data != null){
-			foreach(KeyValuePair<string, object> kvp in a.data){
-				if (kvp.Value is ICloneable cloneable){
-					o.data.Add(new string(kvp.Key), cloneable.Clone());
-				}else{
-					o.data.Add(new string(kvp.Key), kvp.Value);
-				}
-			}
-		}
-		
-		return o;
+		return new AshFile(a);
 	}
 	
 	public static AshFile Merge(AshFile a1, AshFile a2){
@@ -365,37 +312,12 @@ public partial class AshFile : IDictionary<string, object>, ICloneable, IEquatab
 	}
 }
 
-public struct AshFileFormatConfig{
-	public bool compactBools;
-	public bool maskCampNames;
-	public bool maskStrings;
+public record AshFileFormatOptions(byte format, bool compactBools, bool maskCampNames, bool maskStrings, string password){
+	public static readonly AshFileFormatOptions Default = new AshFileFormatOptions(AshFile.latestFormat, true, true, true, null);
 	
-	public static readonly AshFileFormatConfig Default = new AshFileFormatConfig(true, true, true);
-	
-	public AshFileFormatConfig(bool compactBoo, bool maskCampNam, bool maskStr){
-		compactBools = compactBoo;
-		maskCampNames = maskCampNam;
-		maskStrings = maskStr;
-	}
-	
-	public AshFileFormatConfig(byte compactByte){
-		if((compactByte & 1) == 1){
-			compactBools = true;
-		}else{
-			compactBools = false;
-		}
+	public AshFileFormatOptions(byte ver, byte compactByte)
+		: this(ver, (compactByte & 1) == 1, (compactByte & 2) == 2, (compactByte & 4) == 4, (compactByte & 8) == 8 ? "def" : null){
 		
-		if((compactByte & 2) == 2){
-			maskCampNames = true;
-		}else{
-			maskCampNames = false;
-		}
-		
-		if((compactByte & 4) == 4){
-			maskStrings = true;
-		}else{
-			maskStrings = false;
-		}
 	}
 	
 	public byte ToByte(){
@@ -410,6 +332,10 @@ public struct AshFileFormatConfig{
 		
 		if(maskStrings){
 			b |= 4;
+		}
+		
+		if(password != null){
+			b |= 8;
 		}
 		
 		return b;
@@ -463,42 +389,4 @@ internal class AshFileException : Exception{
             info.AddValue(nameof(errorCode), errorCode);
         }
     }
-
-    public override string ToString()
-    {
-        return GetFullMessage();
-    }
-	
-	public string GetFullMessage(){
-		string f = "";
-        f += "AshFileException caught:\n";
-        f += $"Error code: {this.errorCode}\n";
-        f += $"Message: {this.Message}\n";
-        f += $"Source: {this.Source}\n";
-        f += $"Stack Trace: {this.StackTrace}\n";
-        f += $"Target Site: {this.TargetSite}\n";
-
-        if (this.Data.Count > 0)
-        {
-           f += "Additional Data:\n";
-            foreach (var key in this.Data.Keys)
-            {
-                f += $"  {key}: {this.Data[key]}\n";
-            }
-        }
-
-        if (this.InnerException != null)
-        {
-            f += "Inner Exception:\n";
-            if(this.InnerException is AshFileException x){ // Recursively log inner exceptions
-				f += x.GetFullMessage();
-			} else{
-				f += $"Message: {this.InnerException.Message}\n";
-				f += $"Source: {this.InnerException.Source}\n";
-				f += $"Stack Trace: {this.InnerException.StackTrace}\n";
-				f += $"Target Site: {this.InnerException.TargetSite}\n";
-			}
-        }
-		return f;
-	}
 }

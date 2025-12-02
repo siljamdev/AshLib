@@ -53,7 +53,8 @@ public enum AshFileType : byte{ //Represents the type of value in a AshFile camp
 	Vec3 = 14,
 	Vec4 = 15,
 	Bool = 16,
-	Date = 17
+	Date = 17,
+	Decimal = 18
 }
 
 public partial class AshFile{
@@ -75,6 +76,7 @@ public partial class AshFile{
 		if(type == typeof(Vec4)) return AshFileType.Vec4;
 		if(type == typeof(bool)) return AshFileType.Bool;
 		if(type == typeof(Date)) return AshFileType.Date;
+		if(type == typeof(decimal)) return AshFileType.Decimal;
 	
 		return AshFileType.Default; // Default case if no matching type
 	}
@@ -98,6 +100,7 @@ public partial class AshFile{
 			case AshFileType.Vec4: return typeof(Vec4); // Example for Vec4
 			case AshFileType.Bool: return typeof(bool);
 			case AshFileType.Date: return typeof(Date);
+			case AshFileType.Decimal: return typeof(decimal);
 			default: return typeof(object); // Default case if no matching type
 		}
 	}

@@ -348,7 +348,6 @@ public partial class AshFile{
 			a = Parse(s);
 			return true;
 		}catch(Exception e){
-			HandleException(e, "####An error occurred while parsing!####");
 			a = null;
 			return false;
 		}
@@ -356,7 +355,7 @@ public partial class AshFile{
 	
 	public static AshFile Parse(string s){
 		if(s == null){
-			throw new AshFileException("Cant parse null string", 13);
+			throw new AshFileException("Cant parse null string", 12);
 		}
 		
 		int index = 0;

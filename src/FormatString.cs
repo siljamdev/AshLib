@@ -215,6 +215,12 @@ public class FormatString : ICollection<(char, CharFormat?)>, ICloneable, IEquat
 		Append(s, f);
 	}
 	
+	public FormatString(params (string, CharFormat?)[] b) : this(){
+		foreach((string s, CharFormat? f) in b){
+			Append(s, f);
+		}
+	}
+	
 	#region IEnumerator
 	public IEnumerator<(char, CharFormat?)> GetEnumerator(){
 		for(int i = 0; i < privateContent.Count; i++){
