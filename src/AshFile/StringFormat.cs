@@ -315,6 +315,7 @@ public partial class AshFile{
 			case AshFileType.Vec4: return "v4"; // Example for Vec4
 			case AshFileType.Bool: return "b";
 			case AshFileType.Date: return "dt";
+			case AshFileType.Decimal: return "dc";
 			default: return "ERROR"; // Default case if no matching type
 		}
 	}
@@ -339,6 +340,7 @@ public partial class AshFile{
 			case "v4": return AshFileType.Vec4;
 			case "b": return AshFileType.Bool;
 			case "dt": return AshFileType.Date;
+			case "dc": return AshFileType.Decimal;
 			default: return AshFileType.Default;
 		}
 	}
@@ -648,6 +650,13 @@ public partial class AshFile{
 				if(byte.TryParse(d[0], out byte day) && byte.TryParse(d[1], out byte month) && ushort.TryParse(d[2], out ushort year) &&
 				byte.TryParse(d[3], out byte hour) && byte.TryParse(d[4], out byte minute) && byte.TryParse(d[5], out byte second)){
 					return new Date(second, minute, hour, day, month, year);
+				}else{
+					return null;
+				}
+			case AshFileType.Decimal:
+				p = ParseUntilSemicolon(s, ref index, array);
+				if(decimal.TryParse(p, out decimal j16)){
+					return j16;
 				}else{
 					return null;
 				}

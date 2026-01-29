@@ -8,9 +8,7 @@ public class ReactiveList<T> : IList<T>, System.Collections.IList, IReadOnlyList
 {
 	List<T> list; //internal list
 	
-	public Action? OnChanged{
-		private get; set;
-	}
+	Action? OnChanged;
 	
 	public int Capacity{
 		get{
@@ -83,16 +81,19 @@ public class ReactiveList<T> : IList<T>, System.Collections.IList, IReadOnlyList
 		}
 	}
 	
-	public ReactiveList(){
+	public ReactiveList(Action? onChange = null){
 		list = new List<T>();
+		OnChanged = onChange;
 	}
 	
-	public ReactiveList(int capacity){
+	public ReactiveList(int capacity, Action? onChange = null){
 		list = new List<T>(capacity);
+		OnChanged = onChange;
 	}
 	
-	public ReactiveList(IEnumerable<T> collection){
+	public ReactiveList(IEnumerable<T> collection, Action? onChange = null){
 		list = new List<T>(collection);
+		OnChanged = onChange;
 	}
 	
 	public void Add(T item){

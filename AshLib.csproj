@@ -1,32 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- <OutputType>Exe</OutputType> -->
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	
 	<PackageId>AshLib</PackageId>
-    <Version>3.5.0</Version>
-	<PackageVersion>3.5.0</PackageVersion>
+    <Version>3.5.1</Version>
+	<PackageVersion>3.5.1</PackageVersion>
     <Authors>siljam</Authors>
     <Company>AshProject</Company>
 	
 	<PackageTags>ashfile json tree log deltatime fps console format ansi NO_COLOR</PackageTags>
 	<PackageDescription>AshFiles, FormatStrings, DeltaHelpers &amp; more!</PackageDescription>
-	<PackageReleaseNotes>AshFile V4</PackageReleaseNotes>
+	<PackageReleaseNotes>Little improvements</PackageReleaseNotes>
 	
     <RepositoryUrl>https://github.com/siljamdev/AshLib</RepositoryUrl>
+	<RepositoryType>git</RepositoryType>
 	<PackageProjectUrl>https://github.com/siljamdev/AshLib</PackageProjectUrl>
 	
-	<PackageIcon>res\icon.png</PackageIcon>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	
+	<PackageIcon>res/icon.png</PackageIcon>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   
   <ItemGroup>
 	<Compile Remove="documentation/**" />
 	<Compile Remove="tests/**" />
-	<Compile Remove="Program.cs" />
+	<Compile Remove="exec/**" />
 	<None Include="res\icon.png" Pack="true" PackagePath="res/" />
+	<None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>

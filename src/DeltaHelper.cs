@@ -15,12 +15,16 @@ public class DeltaHelper{ //Class used for helping with deltatime, fps and those
 	public double fps {get; private set;} //Fps, will fluctuate very rapidly
 	public double stableFps {get; private set;} //Fps, is more stable, will update once every stableTime miliseconds. Thought for showing it
 	
+	public long frameCount {get; private set;} //Number of frames
+	
 	public void Start(){ //Call to start the thing
 		timer = Stopwatch.StartNew();
 		
 		lastTime = timer.Elapsed.TotalMilliseconds;
 		lastStable = 0d;
 		stableFrameCounter = 0;
+		
+		frameCount = 0;
 		
 		this.Frame();
 	}
@@ -30,6 +34,8 @@ public class DeltaHelper{ //Class used for helping with deltatime, fps and those
 		deltaTime = (currentTime - lastTime)/1000d; //in seconds
 		lastTime = currentTime;
 		fps = 1d/deltaTime;
+		
+		frameCount++;
 		
 		stableFrameCounter++;
 		

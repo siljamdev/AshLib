@@ -59,6 +59,7 @@ List of supported types:
 |v4|Vec4|struct defined by AshLib, 4 float values are expected serparated by commas|
 |b|boolean| |
 |dt|Date|struct defined by AshLib, 6 numbers are expected separated by /, day, month, year, hour, minute, second|
+|dc|decimal| |
 
 You can get it with:
 ```cs
