@@ -745,10 +745,10 @@ public class FormatString : ICollection<(char, CharFormat?)>, ICloneable, IEquat
 		for(i = 0; i < privateContent.Count; i++){
 			if(privateContent[i] == '\r'){
 				if(i + 1 < privateContent.Count && privateContent[i + 1] == '\n'){
-					i++;
 					FormatString f = new FormatString();
 					f.Append(new string(privateContent.GetRange(s, i - s).ToArray()), format.GetRange(s, i - s).ToArray());
 					l.Add(f);
+					i++;
 					s = i + 1;
 				}else{
 					FormatString f = new FormatString();

@@ -2,6 +2,7 @@
 using AshLib.Dates;
 using AshLib.Lists;
 using AshLib.AshFiles;
+using AshLib.Formatting;
 
 namespace tests;
 
@@ -281,5 +282,17 @@ public class UnitTest1{
 		rl = new ReactiveList<int>(rl.Where(h => h > 2));
 		
 		Assert.Equal(rl.Length, 1);
+    }
+	
+	[Fact]
+    public void formatstringTest1(){
+		FormatString[] fs = new FormatString("I have always\r\nhated french\r\n\r\npeople\r\n", new CharFormat(Color3.Red)).SplitIntoLines();
+		Assert.Equal(fs.Length, 4);
+    }
+	
+	[Fact]
+    public void formatstringTest2(){
+		FormatString[] fs = new FormatString("I have always\r\nhated french\r\n\r\npeople\r\n", new CharFormat(Color3.Red)).SplitIntoLines();
+		Assert.Equal(fs.Sum(h => h.Length), 31);
     }
 }
