@@ -1,5 +1,9 @@
 # AshLib
 <img src="res/icon.png" width="200"/>
+
+[![NuGet](https://img.shields.io/nuget/v/AshLib.svg)](https://www.nuget.org/packages/AshLib)
+[![NuGet](https://img.shields.io/nuget/dt/AshLib.svg)](https://www.nuget.org/packages/AshLib)
+
 Library that comes with multiple utilities
 
 ## Documentation
@@ -45,4 +49,4 @@ Utility that will help you produce a Collapsible and idented log for making debu
 This utility helps you handle files in a project, using a folder similar to the .minecraft folder
 
 ## License
-This software is licensed under the [MIT License](https://github.com/siljamdev/AshLib/blob/main/LICENSE)
+This software is licensed under the [MIT License](./LICENSE)
