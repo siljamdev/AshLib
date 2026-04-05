@@ -83,7 +83,7 @@ string json = a.ToJson();
 Usually, field names are separated like folders of a file system using dots (`.`). For example:  
 `user.preferences.darkMode: true`
 
-You can visualize a list of all camps using:
+You can visualize a list of all fields using:
 ```cs
 Console.WriteLine(a.Visualize());
 ```
@@ -97,4 +97,4 @@ Or even visualize with formatting, using [FormatStrings](./formatstrings.md)
 ```cs
 Console.WriteLine(a.VisualizeAsFormattedTree(new CharFormat(Color3.Red), new CharFormat(Color3.Blue), new CharFormat(Color3.Green)));
 ```
-This way, tree lines will be red, camp names blue and camp values green
+This way, tree lines will be red, field names blue and field values green
