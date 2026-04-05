@@ -1,9 +1,9 @@
 # AshFiles
 
-An AshFile is a file format that has **.ash extension**, but it also represents a structure of data.  
-This structure is based in multiple pockets of information. These pockets are called **camps**.  
-Each camp has a **key** and a **value**. This value can be many things.  
-For example, you could have a camp with key "debt", with its value being a number and being 12000.  
+An AshFile is a file format that has `.ash` extension, but it also represents a structure of data.  
+This structure is based in multiple pockets of information. These pockets are called **fields**.  
+Each field has a **key** and a **value**. This value can be many things.  
+For example, you could have a field with key "debt", with its value being a number and being 12000.  
 
 ## Camp management
 Start by creating an AshFile:
@@ -13,8 +13,8 @@ AshFile a = new AshFile();
 
 Now we can add camps:
 ```cs
-a.SetCamp("hello", "world");
-a.SetCamp("num", -57.8);
+a.Set("hello", "world");
+a.Set("num", -57.8);
 ```
 There are many more options, check the [Reference Documentation](./AshLibReferenceDocumentation.pdf) or [Usage Documentation](./AshLibUsageDocumentation.pdf).  
 
@@ -34,7 +34,7 @@ There are many options for this byte format, like the format itself (V1, V2, V3,
 ## String format
 There is also a somewhat readable string format:
 `<name> : type : value ;`  
-That is a single camp, after the semicolon there can be more. Also, it can be arrays:
+That is a single field, after the semicolon there can be more. Also, it can be arrays:
 `<name> : type : [value1; value2; value3];`  
 Any amount of whitespace is okay.
 
@@ -80,7 +80,7 @@ string json = a.ToJson();
 ```
 
 ## Visualizing
-Usually, camp names are separated like forlders of a file system using dots (.). For example:  
+Usually, field names are separated like folders of a file system using dots (`.`). For example:  
 `user.preferences.darkMode: true`
 
 You can visualize a list of all camps using:

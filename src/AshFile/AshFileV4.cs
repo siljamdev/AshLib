@@ -68,7 +68,7 @@ public partial class AshFile{
 					object campValue = ReadCampValue(fileBytes, ref index, config.maskStrings && !usesPassword, config.compactBools);
 					
 					if(dic.ContainsKey(campName)){
-						throw new AshFileException("The dictionary already has a camp named " + campName, 3);
+						throw new AshFileException("The dictionary already has a field named " + campName, 3);
 					}
 					dic.Add(campName, campValue);
 				} catch(Exception e){

@@ -771,7 +771,7 @@ public partial class AshFile{
 		
 		while(true){
 			if(index >= s.Length){
-				throw new AshFileException("Expected camp name and found end of string", 12);
+				throw new AshFileException("Expected field name and found end of string", 12);
 			}
 			
 			if(s[index] == '>'){
