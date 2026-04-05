@@ -11,7 +11,7 @@ Start by creating an AshFile:
 AshFile a = new AshFile();
 ```
 
-Now we can add camps:
+Now we can add fields:
 ```cs
 a.Set("hello", "world");
 a.Set("num", -57.8);
