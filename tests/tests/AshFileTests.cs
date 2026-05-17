@@ -1,46 +1,10 @@
 ﻿using AshLib;
 using AshLib.Dates;
-using AshLib.Lists;
 using AshLib.AshFiles;
-using AshLib.Formatting;
 
-namespace tests;
+namespace AshLib.Tests;
 
-public class UnitTest1{
-    [Fact]
-    public void colorTest1(){
-		Color3 a = new Color3(100, 16, 0);
-		Color3 b = new Color3("#641000");
-		Assert.Equal(a, b);
-    }
-	
-	[Fact]
-    public void colorTest2(){
-		Color3 a = new Color3(255, 51, 0);
-		Vec3 b = new Vec3(1f, 0.2f, 0f);
-		Assert.Equal(a.ToVec(), b);
-    }
-	
-	[Fact]
-    public void colorTest3(){
-		Color3 a = Color3.FromHSV(65, 100, 60);
-		Color3 b = new Color3(140, 153, 0);
-		Assert.Equal(a, b);
-    }
-	
-	[Fact]
-    public void dateTest1(){
-		Date a = Date.FromCPTF("AMAYZm");
-		Date b = (Date) new DateTime(1897, 8, 12, 12, 0, 0);
-		Assert.Equal(a, b);
-    }
-	
-	[Fact]
-    public void dateTest2(){
-		Date a = new Date(0, 0, 12, 12, 8, 1897);
-		Assert.Equal(a.ToString(), "12/08/1897 12:00:00");
-    }
-	
+public class AshFileTests{
 	[Fact]
     public void ashFileTest1(){
 		AshFile a = new AshFile();
@@ -130,7 +94,7 @@ public class UnitTest1{
 		
 		bool b = (a.GetValue<byte>("ba") == 5) && (a.GetValue<string>("ul") == "hello") && (a.GetValue<int>("n1") == 67);
 		
-		Assert.Equal(true, b);
+		Assert.True(b);
     }
 	
 	[Fact]
@@ -154,7 +118,7 @@ public class UnitTest1{
 		
 		bool c = a == b; //The test will do dictionary compare, not ashfile compare
 		
-		Assert.Equal(true, c);
+		Assert.True(c);
     }
 	
 	[Fact]
@@ -192,7 +156,7 @@ public class UnitTest1{
 		
 		AshFile b = (AshFile) a.Where(kvp => kvp.Key.StartsWith("b")).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 		
-		Assert.Equal(true, b.ContainsKey("ba.adq"));
+		Assert.True(b.ContainsKey("ba.adq"));
     }
 	
 	[Fact]
@@ -235,64 +199,6 @@ public class UnitTest1{
 		
 		bool c = a == b; //The test will do dictionary compare, not ashfile compare
 		
-		Assert.Equal(true, c);
-    }
-	
-	[Fact]
-    public void listTest1(){
-		bool b = false;
-		
-		ReactiveList<int> a = new ReactiveList<int>(() => {
-			b = true;
-		}){1,2,3};
-		
-		a.Remove(2);
-		
-		Assert.Equal(true, b);
-    }
-	
-	[Fact]
-    public void listTest2(){
-		ReactiveList<int> a = new ReactiveList<int>(){0,1,2,3,4,5,6};
-		ReactiveList<int> b = new ReactiveList<int>(){4,0,1,2,3,5,6};
-		
-		a.Move(4, 0);
-		
-		Assert.Equal(b, a);
-    }
-	
-	[Fact]
-    public void listTest3(){
-		bool b = false;
-		ReactiveList<int> rl = new ReactiveList<int>(() => {
-			b = true;
-		}){1,2,3};
-		
-		IList<int> a = rl;
-		
-		a.Remove(2);
-		
-		Assert.Equal(true, b);
-    }
-	
-	[Fact]
-    public void listTest4(){
-		ReactiveList<int> rl = new ReactiveList<int>(){1,2,3};
-		
-		rl = new ReactiveList<int>(rl.Where(h => h > 2));
-		
-		Assert.Equal(rl.Length, 1);
-    }
-	
-	[Fact]
-    public void formatstringTest1(){
-		FormatString[] fs = new FormatString("I have always\r\nhated french\r\n\r\npeople\r\n", new CharFormat(Color3.Red)).SplitIntoLines();
-		Assert.Equal(fs.Length, 4);
-    }
-	
-	[Fact]
-    public void formatstringTest2(){
-		FormatString[] fs = new FormatString("I have always\r\nhated french\r\n\r\npeople\r\n", new CharFormat(Color3.Red)).SplitIntoLines();
-		Assert.Equal(fs.Sum(h => h.Length), 31);
+		Assert.True(c);
     }
 }
